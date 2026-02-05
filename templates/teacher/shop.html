@@ -1,0 +1,323 @@
+{% extends "base.html" %}
+
+{% block title %}Магазин баллов{% endblock %}
+
+{% block breadcrumbs %}
+    <span>Магазин</span>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary-color);">
+            <i class="fas fa-store"></i> Магазин баллов
+        </h1>
+        
+        <div style="display: flex; gap: 10px;">
+            <select id="category-filter" class="form-control" style="width: 200px;">
+                <option value="all">Все категории</option>
+                {% for category in categories %}
+                <option value="{{ category }}">{{ category }}</option>
+                {% endfor %}
+            </select>
+        </div>
+    </div>
+    
+    <div class="card" style="margin-bottom: 30px;">
+        <div style="background: linear-gradient(135deg, rgba(123, 31, 162, 0.1), rgba(156, 39, 176, 0.1)); 
+                    padding: 25px; border-radius: var(--radius); text-align: center;">
+            <h3 style="color: var(--primary-color); margin-bottom: 15px;">
+                <i class="fas fa-info-circle"></i> Информация о магазине
+            </h3>
+            <p style="margin-bottom: 0; font-size: 1.1rem;">
+                Здесь отображаются все товары, доступные для покупки учениками.<br>
+                Как преподаватель, вы можете просматривать товары, но не можете их покупать.<br>
+                Ученики могут покупать товары за накопленные баллы.
+            </p>
+        </div>
+    </div>
+    
+    {% if products %}
+    <div class="products-grid">
+        {% for product in products %}
+        <div class="product-card fade-in searchable-item" data-category="{{ product.category }}">
+            <div class="product-image-container">
+                {% if product.image %}
+                <img src="{{ url_for('static', filename=product.image) }}" 
+                     alt="{{ product.name }}" 
+                     class="product-image">
+                {% else %}
+                <div class="product-image-placeholder">
+                    <i class="fas fa-image"></i>
+                </div>
+                {% endif %}
+                
+                <div class="product-category">
+                    {{ product.category }}
+                </div>
+                
+                <div class="product-quantity-badge">
+                    {% if product.quantity > 10 %}
+                    <span style="background: var(--success-color);">В наличии</span>
+                    {% elif product.quantity > 0 %}
+                    <span style="background: var(--warning-color);">Осталось: {{ product.quantity }}</span>
+                    {% else %}
+                    <span style="background: var(--danger-color);">Нет в наличии</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="product-info">
+                <h3 class="product-title">{{ product.name }}</h3>
+                
+                {% if product.description %}
+                <p class="product-description">
+                    {{ product.description[:100] }}{% if product.description|length > 100 %}...{% endif %}
+                </p>
+                {% endif %}
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                    <div class="product-price">
+                        {{ product.price }} <span class="currency">баллов</span>
+                    </div>
+                    
+                    <div>
+                        <span class="product-stock">
+                            {% if product.quantity > 0 %}
+                            <i class="fas fa-check" style="color: var(--success-color);"></i> В наличии
+                            {% else %}
+                            <i class="fas fa-times" style="color: var(--danger-color);"></i> Нет в наличии
+                            {% endif %}
+                        </span>
+                    </div>
+                </div>
+                
+                <div style="margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                    <small style="color: var(--text-light); display: block; text-align: center;">
+                        <i class="fas fa-info-circle"></i> Только для просмотра
+                    </small>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px; color: var(--text-light);">
+        <p>Показано {{ products|length }} товаров</p>
+    </div>
+    
+    {% else %}
+    <div class="card" style="text-align: center; padding: 50px;">
+        <i class="fas fa-store-slash" style="font-size: 4rem; color: var(--text-light); margin-bottom: 20px;"></i>
+        <h3 style="color: var(--text-light); margin-bottom: 15px;">Магазин пуст</h3>
+        <p>В магазине пока нет товаров. Администратор добавит товары позже.</p>
+    </div>
+    {% endif %}
+    
+    <div class="card fade-in" style="margin-top: 40px;">
+        <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+            <i class="fas fa-chart-pie"></i> Статистика магазина
+        </h3>
+        
+        <div class="row">
+            <div class="col-3">
+                <div style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: bold; color: var(--primary-color);">
+                        {{ products|length }}
+                    </div>
+                    <p style="color: var(--text-light);">Всего товаров</p>
+                </div>
+            </div>
+            
+            <div class="col-3">
+                <div style="text-align: center;">
+                    <div style="font-size: 2.5rem; font-weight: bold; color: var(--success-color);">
+                        {{ products|selectattr('quantity', 'gt', 0)|list|length }}
+                    </div>
+                    <p style="color: var(--text-light);">Доступно для покупки</p>
+                </div>
+            </div>
+            
+            <div class="col-3">
+                <div style="text-align: center;">
+                    {% set categories_count = {} %}
+                    {% for product in products %}
+                        {% if product.category in categories_count %}
+                            {% set _ = categories_count.update({product.category: categories_count[product.category] + 1}) %}
+                        {% else %}
+                            {% set _ = categories_count.update({product.category: 1}) %}
+                        {% endif %}
+                    {% endfor %}
+                    <div style="font-size: 2.5rem; font-weight: bold; color: var(--warning-color);">
+                        {{ categories_count|length }}
+                    </div>
+                    <p style="color: var(--text-light);">Категорий товаров</p>
+                </div>
+            </div>
+            
+            <div class="col-3">
+                <div style="text-align: center;">
+                    {% set total_price = namespace(value=0) %}
+                    {% for product in products %}
+                        {% set total_price.value = total_price.value + product.price %}
+                    {% endfor %}
+                    <div style="font-size: 2.5rem; font-weight: bold; color: var(--danger-color);">
+                        {{ (total_price.value / products|length if products|length > 0 else 0)|round|int }}
+                    </div>
+                    <p style="color: var(--text-light);">Средняя цена</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.product-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.product-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.product-image-container {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+.product-image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--border-color), #e0e0e0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    font-size: 3rem;
+}
+
+.product-category {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.product-quantity-badge {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+}
+
+.product-quantity-badge span {
+    padding: 5px 10px;
+    border-radius: 20px;
+    color: white;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+
+.product-info {
+    padding: 20px;
+}
+
+.product-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-color);
+    height: 3.6rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.product-description {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    height: 4.5rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.product-price {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.product-price .currency {
+    font-size: 1rem;
+    color: var(--text-light);
+    font-weight: 400;
+}
+
+.product-stock {
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const categoryFilter = document.getElementById('category-filter');
+    
+    categoryFilter.addEventListener('change', function() {
+        const selectedCategory = this.value;
+        const products = document.querySelectorAll('.product-card');
+        
+        products.forEach(product => {
+            const productCategory = product.dataset.category;
+            
+            if (selectedCategory === 'all' || productCategory === selectedCategory) {
+                product.style.display = 'block';
+                setTimeout(() => {
+                    product.style.opacity = '1';
+                    product.style.transform = 'translateY(0)';
+                }, 50);
+            } else {
+                product.style.opacity = '0';
+                product.style.transform = 'translateY(20px)';
+                setTimeout(() => {
+                    product.style.display = 'none';
+                }, 300);
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

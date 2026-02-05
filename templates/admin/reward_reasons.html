@@ -1,0 +1,190 @@
+{% extends "base.html" %}
+
+{% block title %}Причины начисления баллов{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary-color);">
+            <i class="fas fa-star"></i> Причины начисления баллов
+        </h1>
+        
+        <div>
+            <button id="save-order" class="btn btn-success" style="margin-right: 10px;">
+                <i class="fas fa-save"></i> Сохранить порядок
+            </button>
+            <a href="{{ url_for('create_reward_reason') }}" class="btn btn-primary">
+                <i class="fas fa-plus-circle"></i> Создать причину
+            </a>
+        </div>
+    </div>
+    
+    <div class="card">
+        <div style="background: rgba(123, 31, 162, 0.1); padding: 15px; border-radius: var(--radius); margin-bottom: 20px;">
+            <h4><i class="fas fa-info-circle"></i> Инструкция</h4>
+            <p style="margin-bottom: 0;">
+                <strong>Порядок причин важен!</strong> Преподаватели увидят их в том порядке, который вы зададите здесь.<br>
+                Перетаскивайте строки мышкой для изменения порядка, затем нажмите "Сохранить порядок".
+            </p>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table" id="reasons-table">
+                <thead>
+                    <tr>
+                        <th style="width: 60px;">Порядок</th>
+                        <th>Причина начисления</th>
+                        <th>Баллы</th>
+                        <th>Дата создания</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody id="sortable">
+                    {% for reason in reasons %}
+                    <tr class="searchable-item" data-id="{{ reason.id }}">
+                        <td>
+                            <i class="fas fa-arrows-alt handle" style="cursor: move; color: var(--primary-color); margin-right: 8px;"></i>
+                            <span class="order-number">{{ loop.index }}</span>
+                        </td>
+                        <td>{{ reason.reason }}</td>
+                        <td>
+                            <span style="font-weight: bold; color: var(--success-color);">
+                                +{{ reason.points }}
+                            </span>
+                        </td>
+                        <td>
+                            {{ reason.created_at.strftime('%d.%m.%Y') }}<br>
+                            <small style="color: var(--text-light);">
+                                {{ reason.created_at.strftime('%H:%M') }}
+                            </small>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 5px;">
+                                <a href="{{ url_for('edit_reward_reason', reason_id=reason.id) }}" 
+                                   class="btn btn-primary btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <form method="POST" 
+                                      action="{{ url_for('delete_reward_reason', reason_id=reason.id) }}" 
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Вы уверены, что хотите удалить эту причину?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if not reasons %}
+        <div style="text-align: center; padding: 40px; color: var(--text-light);">
+            <i class="fas fa-star" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i>
+            <h4>Нет причин начисления баллов</h4>
+            <p>Создайте причины, чтобы преподаватели могли начислять баллы ученикам</p>
+            <a href="{{ url_for('create_reward_reason') }}" class="btn btn-primary" style="margin-top: 20px;">
+                <i class="fas fa-plus-circle"></i> Создать первую причину
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jqueryui/1.12.1/jquery-ui.min.css">
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="https://code.jquery.com/ui/1.12.1/jquery-ui.min.js"></script>
+
+<script>
+$(document).ready(function() {
+    // Включаем сортировку
+    $("#sortable").sortable({
+        handle: ".handle",
+        update: function(event, ui) {
+            updateOrderNumbers();
+        }
+    });
+    $("#sortable").disableSelection();
+    
+    // Обновление номеров порядка
+    function updateOrderNumbers() {
+        $('#sortable tr').each(function(index) {
+            $(this).find('.order-number').text(index + 1);
+        });
+    }
+    
+    // Сохранение порядка
+    $('#save-order').click(function() {
+        var orderData = [];
+        $('#sortable tr').each(function(index) {
+            var reasonId = $(this).data('id');
+            orderData.push({
+                id: reasonId,
+                order: index + 1
+            });
+        });
+        
+        $.ajax({
+            url: '{{ url_for("update_reward_reasons_order") }}',
+            method: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify(orderData),
+            success: function(response) {
+                if (response.success) {
+                    alert('Порядок успешно сохранен!');
+                } else {
+                    alert('Ошибка: ' + response.error);
+                }
+            },
+            error: function(xhr, status, error) {
+                alert('Ошибка при сохранении порядка: ' + error);
+            }
+        });
+    });
+    
+    // Поиск
+    $('#search-reasons').on('input', function() {
+        const searchTerm = this.value.toLowerCase();
+        const rows = $('#reasons-table tbody tr');
+        
+        rows.each(function() {
+            const text = $(this).text().toLowerCase();
+            if (text.includes(searchTerm)) {
+                $(this).show();
+            } else {
+                $(this).hide();
+            }
+        });
+    });
+});
+</script>
+
+<style>
+.handle {
+    cursor: move;
+}
+
+#sortable tr {
+    cursor: move;
+}
+
+#sortable tr:hover {
+    background-color: rgba(123, 31, 162, 0.05);
+}
+
+.order-number {
+    display: inline-block;
+    width: 25px;
+    height: 25px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    text-align: center;
+    line-height: 25px;
+    font-weight: bold;
+}
+</style>
+{% endblock %}

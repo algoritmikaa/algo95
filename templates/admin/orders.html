@@ -1,0 +1,175 @@
+{% extends "base.html" %}
+
+{% block title %}Управление заказами{% endblock %}
+
+{% block breadcrumbs %}
+    <span>Заказы</span>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary-color);">
+            <i class="fas fa-shopping-cart"></i> Управление заказами
+        </h1>
+        
+        <div style="display: flex; gap: 10px;">
+            <select id="status-filter" class="form-control" style="width: 200px;">
+                <option value="all">Все статусы</option>
+                <option value="pending">Ожидающие</option>
+                <option value="completed">Выданные</option>
+                <option value="cancelled">Отмененные</option>
+            </select>
+        </div>
+    </div>
+    
+    <div class="card">
+        {% if orders %}
+        <div class="table-responsive">
+            <table class="table" id="orders-table">
+                <thead>
+                    <tr>
+                        <th>№ Заказа</th>
+                        <th>Покупатель</th>
+                        <th>Товар</th>
+                        <th>Стоимость</th>
+                        <th>Дата заказа</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for order in orders %}
+                    <tr class="order-row" data-status="{{ order.status }}">
+                        <td>
+                            <strong>#{{ order.id }}</strong>
+                        </td>
+                        <td>
+                            {{ order.student.first_name }} {{ order.student.last_name }}<br>
+                            <small style="color: var(--text-light);">
+                                {{ order.student.group.name if order.student.group else 'Без группы' }}
+                            </small>
+                        </td>
+                        <td>
+                            <div style="display: flex; align-items: center; gap: 10px;">
+                                {% if order.product.image %}
+                                <img src="{{ url_for('static', filename=order.product.image) }}" 
+                                     alt="{{ order.product.name }}" 
+                                     style="width: 40px; height: 40px; object-fit: cover; border-radius: 6px;">
+                                {% endif %}
+                                <div>
+                                    <strong>{{ order.product.name }}</strong><br>
+                                    <small style="color: var(--text-light);">×{{ order.quantity }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span style="font-weight: bold; color: var(--primary-color);">
+                                {{ order.product.price * order.quantity }} баллов
+                            </span>
+                        </td>
+                        <td>
+                            {{ order.created_at.strftime('%d.%m.%Y') }}<br>
+                            <small style="color: var(--text-light);">
+                                {{ order.created_at.strftime('%H:%M') }}
+                            </small>
+                        </td>
+                        <td>
+                            <span class="order-status status-{{ order.status }}">
+                                {% if order.status == 'pending' %}
+                                <i class="fas fa-clock"></i> Ожидает
+                                {% elif order.status == 'completed' %}
+                                <i class="fas fa-check"></i> Выдан
+                                {% else %}
+                                <i class="fas fa-times"></i> Отменен
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td>
+                            <a href="{{ url_for('order_detail', order_id=order.id) }}" 
+                               class="btn btn-primary btn-sm">
+                                <i class="fas fa-eye"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+            <div>
+                <span style="color: var(--text-light);">
+                    Всего заказов: {{ orders|length }}
+                </span>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <span class="order-status status-pending" style="margin-right: 10px;">
+                    <i class="fas fa-clock"></i> Ожидают: {{ orders|selectattr('status', 'equalto', 'pending')|list|length }}
+                </span>
+                <span class="order-status status-completed">
+                    <i class="fas fa-check"></i> Выданы: {{ orders|selectattr('status', 'equalto', 'completed')|list|length }}
+                </span>
+            </div>
+        </div>
+        
+        {% else %}
+        <div style="text-align: center; padding: 50px; color: var(--text-light);">
+            <i class="fas fa-shopping-cart" style="font-size: 4rem; margin-bottom: 20px; opacity: 0.5;"></i>
+            <h3>Заказов пока нет</h3>
+            <p>Как только ученики начнут покупать товары, заказы появятся здесь</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<style>
+.order-status {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-pending {
+    background: rgba(255, 152, 0, 0.15);
+    color: var(--warning-color);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.status-completed {
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--success-color);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-cancelled {
+    background: rgba(244, 67, 54, 0.15);
+    color: var(--danger-color);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statusFilter = document.getElementById('status-filter');
+    
+    statusFilter.addEventListener('change', function() {
+        const selectedStatus = this.value;
+        const rows = document.querySelectorAll('.order-row');
+        
+        rows.forEach(row => {
+            const rowStatus = row.dataset.status;
+            
+            if (selectedStatus === 'all' || rowStatus === selectedStatus) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

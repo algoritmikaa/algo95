@@ -1,0 +1,147 @@
+{% extends "base.html" %}
+
+{% block title %}Управление магазином{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary-color);">
+            <i class="fas fa-store"></i> Управление магазином
+        </h1>
+        
+        <a href="{{ url_for('product_detail') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Добавить товар
+        </a>
+    </div>
+    
+    <div class="card">
+        <div style="margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
+            <div style="flex: 1;">
+                <input type="text" id="search-products" class="form-control" placeholder="Поиск товаров...">
+            </div>
+            
+            <div style="width: 250px;">
+                <select id="category-filter" class="form-control">
+                    <option value="all">Все категории</option>
+                    {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table" id="products-table">
+                <thead>
+                    <tr>
+                        <th style="width: 80px;">Фото</th>
+                        <th>Название</th>
+                        <th>Категория</th>
+                        <th>Цена (баллы)</th>
+                        <th>В наличии</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for product in products %}
+                    <tr class="searchable-item" data-category="{{ product.category }}">
+                        <td>
+                            {% if product.image %}
+                            <img src="{{ url_for('static', filename=product.image) }}" 
+                                 alt="{{ product.name }}" 
+                                 style="width: 60px; height: 60px; object-fit: cover; border-radius: 8px;">
+                            {% else %}
+                            <div style="width: 60px; height: 60px; background: var(--border-color); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
+                                <i class="fas fa-image" style="color: var(--text-light);"></i>
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <strong>{{ product.name }}</strong>
+                            {% if product.description %}
+                            <p style="color: var(--text-light); margin: 5px 0 0 0; font-size: 0.9rem;">
+                                {{ product.description[:100] }}{% if product.description|length > 100 %}...{% endif %}
+                            </p>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span style="background: var(--primary-light); color: white; padding: 3px 10px; border-radius: 20px; font-size: 0.8rem;">
+                                {{ product.category }}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-weight: bold; color: var(--primary-color);">
+                                {{ product.price }}
+                            </span>
+                        </td>
+                        <td>
+                            <span style="font-weight: bold; color: {% if product.quantity > 10 %}var(--success-color){% elif product.quantity > 0 %}var(--warning-color){% else %}var(--danger-color){% endif %};">
+                                {{ product.quantity }} шт.
+                            </span>
+                        </td>
+                        <td>
+                            <div style="display: flex; gap: 5px;">
+                                <a href="{{ url_for('product_detail', product_id=product.id) }}" 
+                                   class="btn btn-primary btn-sm">
+                                    <i class="fas fa-edit"></i>
+                                </a>
+                                
+                                <form method="POST" 
+                                      action="{{ url_for('delete_product', product_id=product.id) }}" 
+                                      style="display: inline;"
+                                      onsubmit="return confirm('Вы уверены, что хотите удалить этот товар?');">
+                                    <button type="submit" class="btn btn-danger btn-sm">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if not products %}
+        <div style="text-align: center; padding: 40px; color: var(--text-light);">
+            <i class="fas fa-shopping-cart" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i>
+            <h4>Магазин пуст</h4>
+            <p>Добавьте товары, чтобы ученики могли их покупать</p>
+            <a href="{{ url_for('product_detail') }}" class="btn btn-primary" style="margin-top: 20px;">
+                <i class="fas fa-plus-circle"></i> Добавить первый товар
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-products');
+    const categoryFilter = document.getElementById('category-filter');
+    
+    function filterProducts() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const category = categoryFilter.value;
+        const rows = document.querySelectorAll('#products-table tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const rowCategory = row.dataset.category;
+            
+            const matchesSearch = text.includes(searchTerm);
+            const matchesCategory = category === 'all' || rowCategory === category;
+            
+            if (matchesSearch && matchesCategory) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    searchInput.addEventListener('input', filterProducts);
+    categoryFilter.addEventListener('change', filterProducts);
+});
+</script>
+{% endblock %}

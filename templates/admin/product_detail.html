@@ -1,0 +1,196 @@
+{% extends "base.html" %}
+
+{% block title %}
+    {% if product %}Редактирование товара{% else %}Создание товара{% endif %}
+{% endblock %}
+
+{% block breadcrumbs %}
+    <a href="{{ url_for('admin_shop') }}">Магазин</a>
+    <span>
+        {% if product %}
+            Редактирование товара
+        {% else %}
+            Создание товара
+        {% endif %}
+    </span>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary-color);">
+            <i class="fas fa-{% if product %}edit{% else %}plus-circle{% endif %}"></i>
+            {% if product %}Редактирование товара{% else %}Создание нового товара{% endif %}
+        </h1>
+        
+        <a href="{{ url_for('admin_shop') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> Назад к товарам
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-8">
+            <div class="card fade-in">
+                <form method="POST" enctype="multipart/form-data">
+                    <div class="form-group">
+                        <label class="form-label">Название товара *</label>
+                        <input type="text" name="name" class="form-control" 
+                               value="{{ product.name if product else '' }}" required
+                               placeholder="Например: Футболка Алгоритмика">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Описание товара</label>
+                        <textarea name="description" class="form-control" rows="4" 
+                                  placeholder="Подробное описание товара...">{{ product.description if product else '' }}</textarea>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label class="form-label">Оригинальная цена *</label>
+                                <input type="number" name="original_price" class="form-control" 
+                                       value="{{ product.original_price if product and product.original_price else (product.price if product else '') }}" 
+                                       required min="1" placeholder="100">
+                                <small style="color: var(--text-light); display: block; margin-top: 5px;">
+                                    Цена без скидки
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label class="form-label">Цена со скидкой</label>
+                                <input type="number" name="price" class="form-control" 
+                                       value="{{ product.price if product else '' }}" 
+                                       min="1" placeholder="80">
+                                <small style="color: var(--text-light); display: block; margin-top: 5px;">
+                                    Оставьте пустым, если скидки нет
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-4">
+                            <div class="form-group">
+                                <label class="form-label">Количество *</label>
+                                <input type="number" name="quantity" class="form-control" 
+                                       value="{{ product.quantity if product else '1' }}" required
+                                       min="0" placeholder="10">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-6">
+                            <div class="form-group">
+                                <label class="form-label">Категория *</label>
+                                <input type="text" name="category" class="form-control" 
+                                       value="{{ product.category if product else '' }}" required
+                                       placeholder="Например: Одежда" list="categories">
+                                <datalist id="categories">
+                                    <option value="Одежда">
+                                    <option value="Сувениры">
+                                    <option value="Канцелярия">
+                                    <option value="Электроника">
+                                    <option value="Книги">
+                                    <option value="Игры">
+                                </datalist>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Изображение товара</label>
+                        <input type="file" name="image" class="form-control" accept="image/*">
+                        <small style="color: var(--text-light); display: block; margin-top: 5px;">
+                            Рекомендуемый размер: 500x500px. Форматы: JPG, PNG, GIF
+                        </small>
+                        
+                        {% if product and product.image %}
+                        <div style="margin-top: 15px;">
+                            <p>Текущее изображение:</p>
+                            <img src="{{ url_for('static', filename=product.image) }}" 
+                                 alt="{{ product.name }}" 
+                                 style="max-width: 200px; border-radius: var(--radius);">
+                        </div>
+                        {% endif %}
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+                        <a href="{{ url_for('admin_shop') }}" class="btn btn-secondary">
+                            <i class="fas fa-times"></i> Отмена
+                        </a>
+                        
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> 
+                            {% if product %}Сохранить изменения{% else %}Создать товар{% endif %}
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div class="col-4">
+            <div class="card fade-in">
+                <h3 style="color: var(--primary-color); margin-bottom: 15px;">
+                    <i class="fas fa-lightbulb"></i> Советы
+                </h3>
+                
+                <ul style="list-style: none; padding: 0;">
+                    <li style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                        <i class="fas fa-check-circle" style="color: var(--success-color); margin-right: 10px;"></i>
+                        <strong>Цены:</strong> Устанавливайте реалистичные цены
+                    </li>
+                    <li style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                        <i class="fas fa-check-circle" style="color: var(--success-color); margin-right: 10px;"></i>
+                        <strong>Скидки:</strong> Укажите оригинальную цену и цену со скидкой
+                    </li>
+                    <li style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                        <i class="fas fa-check-circle" style="color: var(--success-color); margin-right: 10px;"></i>
+                        <strong>Категории:</strong> Используйте единые категории
+                    </li>
+                    <li style="padding: 10px 0;">
+                        <i class="fas fa-check-circle" style="color: var(--success-color); margin-right: 10px;"></i>
+                        <strong>Изображения:</strong> Добавляйте качественные фото
+                    </li>
+                </ul>
+            </div>
+            
+            {% if product %}
+            <div class="card fade-in" style="margin-top: 20px;">
+                <h3 style="color: var(--primary-color); margin-bottom: 15px;">
+                    <i class="fas fa-chart-line"></i> Статистика товара
+                </h3>
+                
+                <div style="text-align: center; padding: 20px;">
+                    <div style="font-size: 2.5rem; font-weight: bold; color: 
+                        {% if product.original_price and product.original_price > product.price %}var(--danger-color){% else %}var(--primary-color){% endif %}; 
+                        text-decoration: {% if product.original_price and product.original_price > product.price %}line-through{% else %}none{% endif %};">
+                        {{ product.original_price if product.original_price else product.price }}
+                    </div>
+                    <p style="color: var(--text-light);">оригинальная цена</p>
+                    
+                    {% if product.original_price and product.original_price > product.price %}
+                    <div style="font-size: 3rem; font-weight: bold; color: var(--primary-color); margin-top: 10px;">
+                        {{ product.price }}
+                    </div>
+                    <p style="color: var(--text-light);">цена со скидкой</p>
+                    
+                    <div style="background: var(--danger-color); color: white; padding: 5px 10px; 
+                                border-radius: var(--radius); display: inline-block; margin-top: 10px;">
+                        Скидка {{ ((product.original_price - product.price) / product.original_price * 100)|round|int }}%
+                    </div>
+                    {% endif %}
+                    
+                    <div style="font-size: 2rem; font-weight: bold; margin-top: 20px; 
+                                color: {% if product.quantity > 10 %}var(--success-color){% elif product.quantity > 0 %}var(--warning-color){% else %}var(--danger-color){% endif %};">
+                        {{ product.quantity }}
+                    </div>
+                    <p style="color: var(--text-light);">штук в наличии</p>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

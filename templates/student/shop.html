@@ -1,0 +1,801 @@
+{% extends "base.html" %}
+
+{% block title %}Магазин{% endblock %}
+
+{% block breadcrumbs %}
+    <span>Магазин</span>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="shop-header fade-in">
+        <div>
+            <h1 style="color: var(--primary-color); margin-bottom: 10px;">
+                <i class="fas fa-store"></i> Магазин баллов
+            </h1>
+            <p style="color: var(--text-light); font-size: 1.1rem;">
+                Покупайте товары за баллы, заработанные на занятиях
+            </p>
+        </div>
+        
+        <div class="balance-card">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <div style="background: var(--primary-color); width: 60px; height: 60px; 
+                            border-radius: 12px; display: flex; align-items: center; 
+                            justify-content: center;">
+                    <i class="fas fa-coins" style="color: white; font-size: 1.8rem;"></i>
+                </div>
+                <div>
+                    <div style="color: var(--text-light); font-size: 0.9rem;">Ваш баланс</div>
+                    <div style="font-size: 2rem; font-weight: bold; color: var(--primary-color);">
+                        {{ current_user.points }} <span style="font-size: 1rem; color: var(--text-light);">баллов</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card fade-in" style="margin-bottom: 30px;">
+        <div style="display: flex; gap: 20px; align-items: center;">
+            <div style="flex: 1;">
+                <input type="text" id="search-products" class="form-control" 
+                       placeholder="Поиск товаров...">
+            </div>
+            
+            <div style="width: 250px;">
+                <select id="category-filter" class="form-control">
+                    <option value="all">Все категории</option>
+                    {% for category in categories %}
+                    <option value="{{ category }}">{{ category }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            
+            <div style="width: 200px;">
+                <select id="sort-products" class="form-control">
+                    <option value="default">По умолчанию</option>
+                    <option value="price_asc">Сначала дешевые</option>
+                    <option value="price_desc">Сначала дорогие</option>
+                    <option value="name">По названию</option>
+                </select>
+            </div>
+        </div>
+    </div>
+    
+    {% if products %}
+    <div id="products-container" class="products-grid">
+        {% for product in products %}
+        <div class="product-card searchable-item" 
+             data-category="{{ product.category }}"
+             data-price="{{ product.price }}"
+             data-name="{{ product.name.lower() }}">
+            <div class="product-image-container">
+                {% if product.image %}
+                <img src="{{ url_for('static', filename=product.image) }}" 
+                     alt="{{ product.name }}" 
+                     class="product-image">
+                {% else %}
+                <div class="product-image-placeholder">
+                    <i class="fas fa-gift"></i>
+                </div>
+                {% endif %}
+                
+                {% if product.quantity <= 0 %}
+                <div class="sold-out-overlay">
+                    <span>Нет в наличии</span>
+                </div>
+                {% endif %}
+                
+                <div class="product-category">
+                    {{ product.category }}
+                </div>
+            </div>
+            
+            <div class="product-info">
+                <h3 class="product-title">{{ product.name }}</h3>
+                
+                {% if product.description %}
+                <p class="product-description">
+                    {{ product.description }}
+                </p>
+                {% endif %}
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                    <div class="product-price">
+                        {{ product.price }} <span class="currency">баллов</span>
+                    </div>
+                    
+                    <div class="product-stock">
+                        {% if product.quantity > 10 %}
+                        <span style="color: var(--success-color);">
+                            <i class="fas fa-check-circle"></i> В наличии
+                        </span>
+                        {% elif product.quantity > 0 %}
+                        <span style="color: var(--warning-color);">
+                            <i class="fas fa-exclamation-circle"></i> Осталось: {{ product.quantity }}
+                        </span>
+                        {% else %}
+                        <span style="color: var(--danger-color);">
+                            <i class="fas fa-times-circle"></i> Нет в наличии
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                
+                <div class="product-actions">
+                    {% if product.quantity > 0 %}
+                        {% if current_user.points >= product.price %}
+                        <button class="btn btn-primary buy-btn" 
+                                data-product-id="{{ product.id }}"
+                                data-product-name="{{ product.name }}"
+                                data-product-price="{{ product.price }}"
+                                style="width: 100%;">
+                            <i class="fas fa-shopping-cart"></i> Купить за {{ product.price }} баллов
+                        </button>
+                        {% else %}
+                        <button class="btn btn-secondary" disabled style="width: 100%;">
+                            <i class="fas fa-lock"></i> Недостаточно баллов
+                        </button>
+                        <div style="text-align: center; margin-top: 10px;">
+                            <small style="color: var(--danger-color);">
+                                Нужно еще {{ product.price - current_user.points }} баллов
+                            </small>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                    <button class="btn btn-secondary" disabled style="width: 100%;">
+                        <i class="fas fa-times"></i> Товар закончился
+                    </button>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    
+    <div style="text-align: center; margin-top: 30px; color: var(--text-light);">
+        <p>Показано <span id="products-count">{{ products|length }}</span> товаров из {{ products|length }}</p>
+    </div>
+    
+    {% else %}
+    <div class="card" style="text-align: center; padding: 50px;">
+        <i class="fas fa-store-slash" style="font-size: 4rem; color: var(--text-light); margin-bottom: 20px;"></i>
+        <h3 style="color: var(--text-light); margin-bottom: 15px;">Магазин пуст</h3>
+        <p>В магазине пока нет товаров. Загляните позже!</p>
+    </div>
+    {% endif %}
+    
+    <div class="row" style="margin-top: 40px;">
+        <div class="col-6">
+            <div class="card fade-in">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-question-circle"></i> Как купить товар?
+                </h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div class="step-card">
+                        <div class="step-number">1</div>
+                        <div>
+                            <h4 style="margin-bottom: 5px;">Найдите товар</h4>
+                            <p style="color: var(--text-light); margin-bottom: 0;">
+                                Выберите товар из каталога, который хотите приобрести
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">2</div>
+                        <div>
+                            <h4 style="margin-bottom: 5px;">Нажмите "Купить"</h4>
+                            <p style="color: var(--text-light); margin-bottom: 0;">
+                                Если у вас достаточно баллов, нажмите кнопку покупки
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="step-card">
+                        <div class="step-number">3</div>
+                        <div>
+                            <h4 style="margin-bottom: 5px;">Получите товар</h4>
+                            <p style="color: var(--text-light); margin-bottom: 0;">
+                                Заберите товар у администратора в школе
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-6">
+            <div class="card fade-in">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-chart-line"></i> Ваша статистика покупок
+                </h3>
+                
+                <div style="text-align: center; padding: 20px;">
+                    <div class="stats-grid-mini">
+                        <div class="stat-mini">
+                            <div class="stat-number-mini">{{ current_user.orders|selectattr('status', 'equalto', 'completed')|list|length }}</div>
+                            <div class="stat-label-mini">Куплено товаров</div>
+                        </div>
+                        
+                        <div class="stat-mini">
+                            <div class="stat-number-mini">
+                                {% set spent_points = namespace(value=0) %}
+                                {% for order in current_user.orders %}
+                                    {% if order.status == 'completed' %}
+                                        {% set spent_points.value = spent_points.value + (order.product.price * order.quantity) %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ spent_points.value }}
+                            </div>
+                            <div class="stat-label-mini">Потрачено баллов</div>
+                        </div>
+                        
+                        <div class="stat-mini">
+                            <div class="stat-number-mini">{{ current_user.orders|selectattr('status', 'equalto', 'pending')|list|length }}</div>
+                            <div class="stat-label-mini">Ожидают выдачи</div>
+                        </div>
+                    </div>
+                    
+                    {% if current_user.orders %}
+                    <div style="margin-top: 30px;">
+                        <h4 style="color: var(--primary-color); margin-bottom: 15px;">
+                            Последняя покупка
+                        </h4>
+                        {% set last_order = current_user.orders|sort(attribute='created_at', reverse=true)|first %}
+                        {% if last_order %}
+                        <div style="background: rgba(123, 31, 162, 0.05); padding: 15px; border-radius: var(--radius);">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>Товар:</span>
+                                <strong>{{ last_order.product.name }}</strong>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>Дата:</span>
+                                <span>{{ last_order.created_at.strftime('%d.%m.%Y') }}</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Статус:</span>
+                                <span class="order-status status-{{ last_order.status }}">
+                                    {% if last_order.status == 'pending' %}
+                                    <i class="fas fa-clock"></i> Ожидает
+                                    {% elif last_order.status == 'completed' %}
+                                    <i class="fas fa-check"></i> Выдан
+                                    {% else %}
+                                    <i class="fas fa-times"></i> Отменен
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Модальное окно подтверждения покупки -->
+<div id="purchaseModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h3 style="color: var(--primary-color); margin: 0;">
+                <i class="fas fa-shopping-cart"></i> Подтверждение покупки
+            </h3>
+            <span class="close">&times;</span>
+        </div>
+        <div class="modal-body">
+            <div id="purchaseContent">
+                <!-- Контент будет загружен динамически -->
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.shop-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+    gap: 20px;
+}
+
+.balance-card {
+    background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+    color: white;
+    padding: 20px;
+    border-radius: var(--radius);
+    min-width: 300px;
+    box-shadow: 0 10px 20px rgba(123, 31, 162, 0.2);
+}
+
+.product-card {
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+.product-card:hover {
+    transform: translateY(-10px);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+}
+
+.product-image-container {
+    position: relative;
+    height: 200px;
+    overflow: hidden;
+}
+
+.product-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.5s;
+}
+
+.product-card:hover .product-image {
+    transform: scale(1.05);
+}
+
+.product-image-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, var(--border-color), #e0e0e0);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--text-light);
+    font-size: 3rem;
+}
+
+.sold-out-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sold-out-overlay span {
+    background: var(--danger-color);
+    color: white;
+    padding: 10px 20px;
+    border-radius: var(--radius);
+    font-weight: bold;
+    transform: rotate(-15deg);
+}
+
+.product-category {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: rgba(255, 255, 255, 0.9);
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.product-info {
+    padding: 20px;
+}
+
+.product-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 10px;
+    color: var(--text-color);
+    height: 3.6rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.product-description {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    height: 4.5rem;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+}
+
+.product-price {
+    font-size: 1.8rem;
+    font-weight: 700;
+    color: var(--primary-color);
+}
+
+.product-price .currency {
+    font-size: 1rem;
+    color: var(--text-light);
+    font-weight: 400;
+}
+
+.product-actions {
+    margin-top: 20px;
+}
+
+.buy-btn {
+    transition: all 0.3s ease;
+}
+
+.buy-btn:hover {
+    background: var(--primary-dark);
+    transform: scale(1.02);
+}
+
+.step-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(123, 31, 162, 0.05);
+    border-radius: var(--radius);
+}
+
+.step-number {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.stats-grid-mini {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+.stat-mini {
+    text-align: center;
+}
+
+.stat-number-mini {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+}
+
+.stat-label-mini {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    margin-top: 5px;
+}
+
+.order-status {
+    display: inline-block;
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.85rem;
+    font-weight: 500;
+}
+
+.status-pending {
+    background: rgba(255, 152, 0, 0.15);
+    color: var(--warning-color);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.status-completed {
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--success-color);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-cancelled {
+    background: rgba(244, 67, 54, 0.15);
+    color: var(--danger-color);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.products-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 25px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    z-index: 1000;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.modal-content {
+    background-color: var(--card-bg);
+    margin: 5% auto;
+    padding: 0;
+    border-radius: var(--radius);
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+}
+
+.modal-header {
+    padding: 20px;
+    border-bottom: 1px solid var(--border-color);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.modal-body {
+    padding: 20px;
+}
+
+.close {
+    color: var(--text-light);
+    font-size: 28px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: color 0.3s;
+}
+
+.close:hover {
+    color: var(--text-color);
+}
+
+@media (max-width: 768px) {
+    .shop-header {
+        flex-direction: column;
+        align-items: stretch;
+    }
+    
+    .balance-card {
+        min-width: auto;
+    }
+    
+    .stats-grid-mini {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-products');
+    const categoryFilter = document.getElementById('category-filter');
+    const sortSelect = document.getElementById('sort-products');
+    const purchaseModal = document.getElementById('purchaseModal');
+    const closeButtons = document.querySelectorAll('.close');
+    let currentUserPoints = {{ current_user.points }};
+    
+    // Функция фильтрации и сортировки товаров
+    function updateProductsDisplay() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const selectedCategory = categoryFilter.value;
+        const sortBy = sortSelect.value;
+        const products = document.querySelectorAll('.product-card');
+        let visibleCount = 0;
+        
+        // Сначала фильтруем
+        products.forEach(product => {
+            const productName = product.dataset.name;
+            const productCategory = product.dataset.category;
+            
+            const matchesSearch = searchTerm === '' || productName.includes(searchTerm);
+            const matchesCategory = selectedCategory === 'all' || productCategory === selectedCategory;
+            
+            if (matchesSearch && matchesCategory) {
+                product.style.display = 'block';
+                visibleCount++;
+            } else {
+                product.style.display = 'none';
+            }
+        });
+        
+        // Обновляем счетчик
+        document.getElementById('products-count').textContent = visibleCount;
+        
+        // Затем сортируем (если нужно)
+        if (sortBy !== 'default') {
+            const container = document.getElementById('products-container');
+            const visibleProducts = Array.from(products).filter(p => p.style.display !== 'none');
+            
+            visibleProducts.sort((a, b) => {
+                switch (sortBy) {
+                    case 'price_asc':
+                        return parseInt(a.dataset.price) - parseInt(b.dataset.price);
+                    case 'price_desc':
+                        return parseInt(b.dataset.price) - parseInt(a.dataset.price);
+                    case 'name':
+                        return a.dataset.name.localeCompare(b.dataset.name);
+                    default:
+                        return 0;
+                }
+            });
+            
+            // Переставляем элементы в DOM
+            visibleProducts.forEach(product => {
+                container.appendChild(product);
+            });
+        }
+    }
+    
+    // Обработчики событий для фильтров
+    searchInput.addEventListener('input', updateProductsDisplay);
+    categoryFilter.addEventListener('change', updateProductsDisplay);
+    sortSelect.addEventListener('change', updateProductsDisplay);
+    
+    // Покупка товара
+    document.querySelectorAll('.buy-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.dataset.productId;
+            const productName = this.dataset.productName;
+            const productPrice = parseInt(this.dataset.productPrice);
+            
+            // Загружаем содержимое модального окна
+            document.getElementById('purchaseContent').innerHTML = `
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <i class="fas fa-gift" style="font-size: 4rem; color: var(--primary-color); margin-bottom: 15px;"></i>
+                    <h4 style="color: var(--primary-color); margin-bottom: 10px;">${productName}</h4>
+                    <p style="color: var(--text-light);">Стоимость: <strong>${productPrice} баллов</strong></p>
+                </div>
+                
+                <div style="background: rgba(123, 31, 162, 0.05); padding: 15px; border-radius: var(--radius); margin-bottom: 20px;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Ваш текущий баланс:</span>
+                        <strong style="color: var(--primary-color);">${currentUserPoints} баллов</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                        <span>Стоимость товара:</span>
+                        <strong style="color: var(--danger-color);">-${productPrice} баллов</strong>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; font-weight: bold; padding-top: 10px; border-top: 1px solid var(--border-color);">
+                        <span>Баланс после покупки:</span>
+                        <strong style="color: ${currentUserPoints - productPrice >= 0 ? 'var(--success-color)' : 'var(--danger-color)'};">${currentUserPoints - productPrice} баллов</strong>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="btn btn-secondary close-modal">Отмена</button>
+                    <button type="button" class="btn btn-primary confirm-purchase" data-product-id="${productId}">
+                        <i class="fas fa-check"></i> Подтвердить покупку
+                    </button>
+                </div>
+            `;
+            
+            purchaseModal.style.display = 'block';
+        });
+    });
+    
+    // Закрытие модального окна
+    closeButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            purchaseModal.style.display = 'none';
+        });
+    });
+    
+    // Закрытие при клике вне окна
+    window.addEventListener('click', function(event) {
+        if (event.target === purchaseModal) {
+            purchaseModal.style.display = 'none';
+        }
+    });
+    
+    // Делегирование событий для кнопок в модальном окне
+    document.addEventListener('click', function(event) {
+        if (event.target.classList.contains('close-modal')) {
+            purchaseModal.style.display = 'none';
+        }
+        
+        if (event.target.classList.contains('confirm-purchase') || 
+            event.target.closest('.confirm-purchase')) {
+            const btn = event.target.classList.contains('confirm-purchase') ? 
+                       event.target : event.target.closest('.confirm-purchase');
+            const productId = btn.dataset.productId;
+            
+            // Отправляем запрос на покупку
+            fetch(`/student/shop/buy/${productId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Обновляем баланс
+                    currentUserPoints = data.new_balance;
+                    
+                    // Показываем успешное сообщение
+                    document.getElementById('purchaseContent').innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <i class="fas fa-check-circle" style="font-size: 4rem; color: var(--success-color); margin-bottom: 15px;"></i>
+                            <h4 style="color: var(--success-color); margin-bottom: 10px;">Покупка успешна!</h4>
+                            <p style="color: var(--text-light); margin-bottom: 20px;">
+                                Товар успешно куплен. Заберите его у администратора в школе.
+                            </p>
+                            <p style="font-weight: bold; color: var(--primary-color);">
+                                Новый баланс: ${data.new_balance} баллов
+                            </p>
+                        </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button type="button" class="btn btn-primary close-modal">
+                                <i class="fas fa-check"></i> Отлично!
+                            </button>
+                        </div>
+                    `;
+                    
+                    // Обновляем отображение баланса на странице
+                    const balanceElements = document.querySelectorAll('.user-points, .balance-card strong');
+                    balanceElements.forEach(el => {
+                        if (el.classList.contains('user-points')) {
+                            el.textContent = `${data.new_balance} баллов`;
+                        } else if (el.closest('.balance-card')) {
+                            el.textContent = `${data.new_balance}`;
+                        }
+                    });
+                    
+                    // Обновляем кнопки покупки на странице
+                    setTimeout(() => {
+                        location.reload();
+                    }, 2000);
+                } else {
+                    // Показываем ошибку
+                    document.getElementById('purchaseContent').innerHTML = `
+                        <div style="text-align: center; padding: 20px;">
+                            <i class="fas fa-exclamation-circle" style="font-size: 4rem; color: var(--danger-color); margin-bottom: 15px;"></i>
+                            <h4 style="color: var(--danger-color); margin-bottom: 10px;">Ошибка</h4>
+                            <p style="color: var(--text-light); margin-bottom: 20px;">${data.error}</p>
+                        </div>
+                        <div style="text-align: center; margin-top: 20px;">
+                            <button type="button" class="btn btn-primary close-modal">
+                                <i class="fas fa-times"></i> Закрыть
+                            </button>
+                        </div>
+                    `;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('purchaseContent').innerHTML = `
+                    <div style="text-align: center; padding: 20px;">
+                        <i class="fas fa-exclamation-circle" style="font-size: 4rem; color: var(--danger-color); margin-bottom: 15px;"></i>
+                        <h4 style="color: var(--danger-color); margin-bottom: 10px;">Ошибка</h4>
+                        <p style="color: var(--text-light); margin-bottom: 20px;">Произошла ошибка при покупке. Попробуйте позже.</p>
+                    </div>
+                    <div style="text-align: center; margin-top: 20px;">
+                        <button type="button" class="btn btn-primary close-modal">
+                            <i class="fas fa-times"></i> Закрыть
+                        </button>
+                    </div>
+                `;
+            });
+        }
+    });
+    
+    // Инициализация отображения
+    updateProductsDisplay();
+});
+</script>
+{% endblock %}

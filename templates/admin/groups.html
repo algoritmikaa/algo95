@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+
+{% block title %}Управление группами{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary-color);">
+            <i class="fas fa-layer-group"></i> Управление группами
+        </h1>
+        
+        <a href="{{ url_for('create_group') }}" class="btn btn-primary">
+            <i class="fas fa-plus-circle"></i> Создать группу
+        </a>
+    </div>
+    
+    <div class="card">
+        <div style="margin-bottom: 20px; display: flex; gap: 15px; align-items: center;">
+            <div style="flex: 1;">
+                <input type="text" id="search-groups" class="form-control" placeholder="Поиск по названию группы...">
+            </div>
+            
+            <div style="width: 300px;">
+                <select id="teacher-filter" class="form-control">
+                    <option value="">Все преподаватели</option>
+                    {% for teacher in teachers %}
+                    <option value="{{ teacher.id }}">{{ teacher.first_name }} {{ teacher.last_name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table" id="groups-table">
+                <thead>
+                    <tr>
+                        <th>Название группы</th>
+                        <th>Преподаватель</th>
+                        <th>Количество учеников</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for group in groups %}
+                    <tr class="searchable-item" data-teacher="{{ group.teacher_id }}">
+                        <td>{{ group.name }}</td>
+                        <td>
+                            {% if group.teacher %}
+                            {{ group.teacher.first_name }} {{ group.teacher.last_name }}
+                            {% else %}
+                            <span style="color: var(--text-light);">Не назначен</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ group.students|length }} учеников</td>
+                        <td>
+                            <a href="{{ url_for('group_detail', group_id=group.id) }}" class="btn btn-primary btn-sm">
+                                <i class="fas fa-edit"></i>
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const searchInput = document.getElementById('search-groups');
+    const teacherFilter = document.getElementById('teacher-filter');
+    
+    function filterGroups() {
+        const searchTerm = searchInput.value.toLowerCase();
+        const teacherId = teacherFilter.value;
+        const rows = document.querySelectorAll('#groups-table tbody tr');
+        
+        rows.forEach(row => {
+            const text = row.textContent.toLowerCase();
+            const rowTeacherId = row.dataset.teacher || '';
+            
+            const matchesSearch = text.includes(searchTerm);
+            const matchesTeacher = !teacherId || rowTeacherId === teacherId;
+            
+            if (matchesSearch && matchesTeacher) {
+                row.style.display = '';
+            } else {
+                row.style.display = 'none';
+            }
+        });
+    }
+    
+    searchInput.addEventListener('input', filterGroups);
+    teacherFilter.addEventListener('change', filterGroups);
+});
+</script>
+{% endblock %}

@@ -1,0 +1,237 @@
+{% extends "base.html" %}
+
+{% block title %}Профиль ученика - {{ user.first_name }} {{ user.last_name }}{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary-color);">
+            <i class="fas fa-user-graduate"></i> Профиль ученика
+        </h1>
+        
+        <a href="{{ url_for('teacher_students') }}?group_id={{ user.group_id }}" class="btn btn-secondary">
+            <i class="fas fa-arrow-left"></i> Назад к списку учеников
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-4">
+            <div class="card fade-in">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">Информация об ученике</h3>
+                
+                <form method="POST">
+                    <div class="form-group">
+                        <label class="form-label">Имя</label>
+                        <input type="text" name="first_name" class="form-control" value="{{ user.first_name }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Фамилия</label>
+                        <input type="text" name="last_name" class="form-control" value="{{ user.last_name }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Логин</label>
+                        <input type="text" name="username" class="form-control" value="{{ user.username }}" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label class="form-label">Группа</label>
+                        <select name="group_id" class="form-control">
+                            <option value="">Без группы</option>
+                            {% for group in groups %}
+                            <option value="{{ group.id }}" {% if user.group_id == group.id %}selected{% endif %}>
+                                {{ group.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <button type="submit" name="update_info" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-save"></i> Сохранить изменения
+                    </button>
+                </form>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <h4 style="color: var(--primary-color); margin-bottom: 15px;">Основная информация</h4>
+                    
+                    <div style="background: rgba(123, 31, 162, 0.05); padding: 15px; border-radius: var(--radius);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                            <span>Дата регистрации:</span>
+                            <span style="font-weight: bold;">
+                                {{ user.created_at.strftime('%d.%m.%Y') }}
+                            </span>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>Роль:</span>
+                            <span style="font-weight: bold;">
+                                {{ user.role|capitalize }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-8">
+            <div class="row">
+                <div class="col-6">
+                    <div class="card fade-in" style="text-align: center;">
+                        <h3 style="color: var(--primary-color); margin-bottom: 10px;">Текущие баллы</h3>
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--primary-color);">
+                            {{ user.points }}
+                        </div>
+                        <p style="color: var(--text-light); margin-top: 10px;">доступно баллов</p>
+                    </div>
+                </div>
+                
+                <div class="col-6">
+                    <div class="card fade-in" style="text-align: center;">
+                        <h3 style="color: var(--primary-color); margin-bottom: 10px;">Начисленные баллы</h3>
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--success-color);">
+                            {{ user.earned_points }}
+                        </div>
+                        <p style="color: var(--text-light); margin-top: 10px;">для рейтинга</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row" style="margin-top: 20px;">
+                <div class="col-6">
+                    <div class="card fade-in" style="text-align: center;">
+                        <h3 style="color: var(--primary-color); margin-bottom: 10px;">Статус</h3>
+                        <div style="font-size: 1.2rem; font-weight: bold; margin-bottom: 10px;">
+                            <span class="user-role" style="background: var(--success-color); padding: 5px 15px;">
+                                Ученик
+                            </span>
+                        </div>
+                        <p style="color: var(--text-light;">
+                            {% if user.group %}
+                            Группа: {{ user.group.name }}
+                            {% else %}
+                            Группа не назначена
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                
+                <div class="col-6">
+                    <div class="card fade-in" style="text-align: center;">
+                        <h3 style="color: var(--primary-color); margin-bottom: 10px;">Потрачено баллов</h3>
+                        <div style="font-size: 3rem; font-weight: bold; color: var(--danger-color);">
+                            {{ user.earned_points - user.points }}
+                        </div>
+                        <p style="color: var(--text-light); margin-top: 10px;">разница</p>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card fade-in" style="margin-top: 20px;">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">Управление баллами</h3>
+                
+                <div class="row">
+                    <div class="col-6">
+                        <form method="POST" style="background: rgba(76, 175, 80, 0.1); padding: 20px; border-radius: var(--radius);">
+                            <h4 style="color: var(--success-color); margin-bottom: 15px;">
+                                <i class="fas fa-plus-circle"></i> Начислить баллы
+                            </h4>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Количество баллов</label>
+                                <input type="number" name="points" class="form-control" min="1" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Причина начисления</label>
+                                <select name="reason" class="form-control" required>
+                                    <option value="">Выберите причину</option>
+                                    {% for reason in reward_reasons %}
+                                    <option value="{{ reason.reason }}">{{ reason.reason }} (+{{ reason.points }})</option>
+                                    {% endfor %}
+                                    <option value="Прочие достижения">Прочие достижения</option>
+                                </select>
+                            </div>
+                            
+                            <button type="submit" name="add_points" class="btn btn-success" style="width: 100%;">
+                                <i class="fas fa-plus"></i> Начислить баллы
+                            </button>
+                        </form>
+                    </div>
+                    
+                    <div class="col-6">
+                        <form method="POST" style="background: rgba(244, 67, 54, 0.1); padding: 20px; border-radius: var(--radius);">
+                            <h4 style="color: var(--danger-color); margin-bottom: 15px;">
+                                <i class="fas fa-minus-circle"></i> Списать баллы
+                            </h4>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Количество баллов</label>
+                                <input type="number" name="points" class="form-control" min="1" required>
+                            </div>
+                            
+                            <div class="form-group">
+                                <label class="form-label">Причина списания</label>
+                                <input type="text" name="reason" class="form-control" placeholder="Укажите причину" required>
+                            </div>
+                            
+                            <button type="submit" name="remove_points" class="btn btn-danger" style="width: 100%;">
+                                <i class="fas fa-minus"></i> Списать баллы
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card fade-in" style="margin-top: 20px;">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">История баллов</h3>
+                
+                {% if history %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Изменение</th>
+                                <th>Причина</th>
+                                <th>Кем изменено</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for record in history %}
+                            <tr>
+                                <td>{{ record.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                                <td>
+                                    <span style="color: {% if record.points_change > 0 %}var(--success-color){% else %}var(--danger-color){% endif %}; font-weight: bold;">
+                                        {% if record.points_change > 0 %}+{% endif %}{{ record.points_change }}
+                                    </span>
+                                </td>
+                                <td>{{ record.reason }}</td>
+                                <td>{{ record.changed_by.first_name }} {{ record.changed_by.last_name }}</td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p style="text-align: center; color: var(--text-light); padding: 20px;">
+                    Нет истории операций с баллами
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.user-role {
+    display: inline-block;
+    padding: 5px 15px;
+    border-radius: 20px;
+    color: white;
+    font-weight: 500;
+    text-transform: uppercase;
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}

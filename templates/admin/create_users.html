@@ -1,0 +1,228 @@
+{% extends "base.html" %}
+
+{% block title %}Создание пользователей{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary-color);">
+            <i class="fas fa-user-plus"></i> Создание пользователей
+        </h1>
+        
+        <div>
+            <a href="{{ url_for('admin_users') }}" class="btn btn-secondary">
+                <i class="fas fa-arrow-left"></i> Назад
+            </a>
+        </div>
+    </div>
+    
+    <div class="card fade-in">
+        <div style="background: linear-gradient(135deg, rgba(123, 31, 162, 0.1), rgba(156, 39, 176, 0.1)); 
+                    padding: 20px; border-radius: var(--radius); margin-bottom: 25px;">
+            <h4 style="color: var(--primary-color); margin-bottom: 10px;">
+                <i class="fas fa-info-circle"></i> Инструкция
+            </h4>
+            <p style="margin-bottom: 0;">
+                <strong>Вы можете создать до 10 пользователей одновременно или только одного.</strong><br>
+                Заполните только те строки, которые вам нужны. Остальные можно оставить пустыми.<br>
+                Поля с <span style="color: var(--danger-color);">*</span> обязательны для заполнения.
+            </p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('create_users') }}" id="createUsersForm">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>№</th>
+                            <th>Логин <span style="color: var(--danger-color);">*</span></th>
+                            <th>Пароль <span style="color: var(--danger-color);">*</span></th>
+                            <th>Имя <span style="color: var(--danger-color);">*</span></th>
+                            <th>Фамилия <span style="color: var(--danger-color);">*</span></th>
+                            <th>Роль <span style="color: var(--danger-color);">*</span></th>
+                            <th>Группа</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for i in range(1, 11) %}
+                        <tr id="row-{{ i }}">
+                            <td>
+                                {{ i }}
+                                <button type="button" class="btn-clear-row" data-row="{{ i }}" 
+                                        style="background: none; border: none; color: var(--danger-color); 
+                                               margin-left: 5px; cursor: pointer;" 
+                                        title="Очистить строку">
+                                    <i class="fas fa-times"></i>
+                                </button>
+                            </td>
+                            <td>
+                                <input type="text" name="username_{{ i }}" class="form-control username-input" 
+                                       placeholder="user{{ i }}" data-row="{{ i }}">
+                            </td>
+                            <td>
+                                <input type="password" name="password_{{ i }}" class="form-control" 
+                                       placeholder="Минимум 6 символов">
+                            </td>
+                            <td>
+                                <input type="text" name="first_name_{{ i }}" class="form-control" 
+                                       placeholder="Иван">
+                            </td>
+                            <td>
+                                <input type="text" name="last_name_{{ i }}" class="form-control" 
+                                       placeholder="Иванов">
+                            </td>
+                            <td>
+                                <select name="role_{{ i }}" class="form-control role-select" data-row="{{ i }}">
+                                    <option value="">Выберите роль</option>
+                                    <option value="student">Ученик</option>
+                                    <option value="teacher">Преподаватель</option>
+                                    <option value="admin">Администратор</option>
+                                </select>
+                            </td>
+                            <td>
+                                <select name="group_id_{{ i }}" class="form-control group-select" data-row="{{ i }}">
+                                    <option value="">Без группы</option>
+                                    {% for group in groups %}
+                                    <option value="{{ group.id }}">{{ group.name }}</option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px;">
+                <div>
+                    <button type="button" id="addOneMore" class="btn btn-secondary">
+                        <i class="fas fa-plus"></i> Добавить еще строку
+                    </button>
+                    <span style="margin-left: 15px; color: var(--text-light); font-size: 0.9rem;">
+                        Строк заполнено: <span id="filledRows">0</span>/10
+                    </span>
+                </div>
+                
+                <div>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Создать пользователей
+                    </button>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const filledRowsElement = document.getElementById('filledRows');
+    const addOneMoreBtn = document.getElementById('addOneMore');
+    let lastFilledRow = 0;
+    
+    // Функция проверки заполненности строки
+    function checkRowFilled(rowNum) {
+        const row = document.getElementById(`row-${rowNum}`);
+        const username = row.querySelector('.username-input').value.trim();
+        const password = row.querySelector('[name^="password_"]').value;
+        const firstName = row.querySelector('[name^="first_name_"]').value.trim();
+        const lastName = row.querySelector('[name^="last_name_"]').value.trim();
+        const role = row.querySelector('.role-select').value;
+        
+        return username && password && firstName && lastName && role;
+    }
+    
+    // Функция обновления счетчика заполненных строк
+    function updateFilledRows() {
+        let filled = 0;
+        for (let i = 1; i <= 10; i++) {
+            if (checkRowFilled(i)) {
+                filled++;
+                if (i > lastFilledRow) lastFilledRow = i;
+            }
+        }
+        filledRowsElement.textContent = filled;
+    }
+    
+    // Очистка строки
+    document.querySelectorAll('.btn-clear-row').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const rowNum = this.dataset.row;
+            const row = document.getElementById(`row-${rowNum}`);
+            
+            row.querySelectorAll('input, select').forEach(element => {
+                if (element.type !== 'button') {
+                    element.value = '';
+                }
+            });
+            
+            updateFilledRows();
+        });
+    });
+    
+    // Автоматическое скрытие/показ группы в зависимости от роли
+    document.querySelectorAll('.role-select').forEach(select => {
+        select.addEventListener('change', function() {
+            const rowNum = this.dataset.row;
+            const groupSelect = document.querySelector(`.group-select[data-row="${rowNum}"]`);
+            
+            if (this.value === 'student') {
+                groupSelect.style.display = 'block';
+            } else {
+                groupSelect.style.display = 'block';
+                groupSelect.value = '';
+            }
+            
+            updateFilledRows();
+        });
+    });
+    
+    // Добавление еще одной строки
+    addOneMoreBtn.addEventListener('click', function() {
+        if (lastFilledRow < 10) {
+            const nextRow = lastFilledRow + 1;
+            const row = document.getElementById(`row-${nextRow}`);
+            
+            // Прокрутка к строке
+            row.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            
+            // Фокус на поле логина
+            const usernameInput = row.querySelector('.username-input');
+            usernameInput.focus();
+            
+            updateFilledRows();
+        } else {
+            alert('Достигнуто максимальное количество строк (10)');
+        }
+    });
+    
+    // Отслеживание изменений в полях
+    document.querySelectorAll('#createUsersForm input, #createUsersForm select').forEach(element => {
+        element.addEventListener('input', updateFilledRows);
+        element.addEventListener('change', updateFilledRows);
+    });
+    
+    // Инициализация счетчика
+    updateFilledRows();
+});
+</script>
+
+<style>
+.username-input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(123, 31, 162, 0.25);
+}
+
+.btn-clear-row {
+    opacity: 0.5;
+    transition: opacity 0.3s;
+}
+
+.btn-clear-row:hover {
+    opacity: 1;
+}
+
+#row-1 .btn-clear-row {
+    display: none; /* Не показываем кнопку очистки для первой строки */
+}
+</style>
+{% endblock %}

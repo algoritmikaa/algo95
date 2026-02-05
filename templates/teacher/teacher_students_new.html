@@ -1,0 +1,517 @@
+{% extends "base.html" %}
+
+{% block title %}Мои ученики{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary-color);">
+            <i class="fas fa-user-graduate"></i> Мои ученики
+        </h1>
+        
+        <div style="display: flex; gap: 15px;">
+            {% if groups %}
+            <select id="group-select" class="form-control" style="width: 300px;" onchange="changeGroup(this)">
+                <option value="">Выберите группу</option>
+                {% for group in groups %}
+                <option value="{{ group.id }}" {% if selected_group and selected_group.id == group.id %}selected{% endif %}>
+                    {{ group.name }} ({{ group.student_count }} учеников)
+                </option>
+                {% endfor %}
+            </select>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if not groups %}
+    <div class="card fade-in">
+        <div style="text-align: center; padding: 40px; color: var(--text-light);">
+            <i class="fas fa-users-slash" style="font-size: 3rem; margin-bottom: 20px; display: block;"></i>
+            <h4>У вас нет назначенных групп</h4>
+            <p>Обратитесь к администратору для назначения групп</p>
+        </div>
+    </div>
+    {% elif not students %}
+    <div class="card fade-in" style="text-align: center; padding: 50px; margin-top: 20px;">
+        <i class="fas fa-user-graduate" style="font-size: 4rem; color: var(--text-light); margin-bottom: 20px;"></i>
+        <h3 style="color: var(--text-light); margin-bottom: 15px;">Выберите группу</h3>
+        <p>Пожалуйста, выберите группу из выпадающего списка выше, чтобы увидеть учеников.</p>
+    </div>
+    {% else %}
+    <div class="card fade-in">
+        <div style="background: linear-gradient(135deg, rgba(123, 31, 162, 0.1), rgba(156, 39, 176, 0.1)); 
+                    padding: 20px; border-radius: var(--radius); margin-bottom: 25px;">
+            <h4 style="color: var(--primary-color); margin-bottom: 10px;">
+                <i class="fas fa-info-circle"></i> Инструкция по массовому начислению баллов
+            </h4>
+            <p style="margin-bottom: 0;">
+                1. Для каждого ученика выберите от 1 до 5 причин начисления баллов<br>
+                2. Количество баллов автоматически берется из настроек причины<br>
+                3. Нажмите "Начислить баллы выбранным" для применения<br>
+                4. Для детального управления нажмите на кнопку "Профиль" рядом с учеником
+            </p>
+        </div>
+        
+        <form id="mass-reward-form">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">№</th>
+                            <th style="width: 60px;">Место</th>
+                            <th style="width: 200px;">Ученик</th> <!-- Добавили фиксированную ширину -->
+                            <th style="width: 100px;">Баллы</th>
+                            <th style="width: 140px;">Причина 1</th>
+                            <th style="width: 140px;">Причина 2</th>
+                            <th style="width: 140px;">Причина 3</th>
+                            <th style="width: 140px;">Причина 4</th>
+                            <th style="width: 140px;">Причина 5</th>
+                            <th style="width: 80px;">Профиль</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>{{ loop.index }}</td>
+                            <td>
+                                <div class="rating-place-teacher">
+                                    {% if student.rating_position == 1 %}
+                                    <i class="fas fa-crown" style="color: gold;"></i>
+                                    {% elif student.rating_position == 2 %}
+                                    <i class="fas fa-medal" style="color: silver;"></i>
+                                    {% elif student.rating_position == 3 %}
+                                    <i class="fas fa-medal" style="color: #cd7f32;"></i>
+                                    {% else %}
+                                    {{ student.rating_position }}
+                                    {% endif %}
+                                </div>
+                            </td>
+                            <td>
+                                <strong>{{ student.first_name }} {{ student.last_name }}</strong><br>
+                                <small style="color: var(--text-light);">{{ student.username }}</small>
+                            </td>
+                            <td>
+                                <span style="font-weight: bold; color: var(--primary-color);">
+                                    {{ student.points }}
+                                </span><br>
+                                <small style="color: var(--text-light);">начислено: {{ student.earned_points }}</small>
+                            </td>
+                            {% for i in range(1, 6) %}
+                            <td>
+                                <select name="student_{{ student.id }}_reason_{{ i }}" class="form-control reason-select">
+                                    <option value="">-- Выбрать --</option>
+                                    {% for reason in reward_reasons %}
+                                    <option value="{{ reason.id }}" data-points="{{ reason.points }}">
+                                        {{ reason.reason }} (+{{ reason.points }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </td>
+                            {% endfor %}
+                            <td>
+                                <a href="{{ url_for('user_detail', user_id=student.id) }}" 
+                                class="btn btn-primary btn-sm" title="Профиль ученика" style="padding: 5px 8px;">
+                                    <i class="fas fa-user-circle"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                <div>
+                    <h4 style="color: var(--primary-color); margin-bottom: 10px;">
+                        <i class="fas fa-calculator"></i> Итог начисления
+                    </h4>
+                    <div style="display: flex; gap: 20px;">
+                        <div>
+                            <span style="color: var(--text-light);">Выбрано учеников:</span>
+                            <span id="selected-count" style="font-weight: bold; margin-left: 10px;">0</span>
+                        </div>
+                        <div>
+                            <span style="color: var(--text-light);">Всего баллов:</span>
+                            <span id="total-points" style="font-weight: bold; color: var(--success-color); margin-left: 10px;">0</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div>
+                    <button type="button" id="submit-rewards" class="btn btn-primary" disabled>
+                        <i class="fas fa-gift"></i> Начислить баллы выбранным
+                    </button>
+                </div>
+            </div>
+        </form>
+        
+        <div id="loading" style="display: none; text-align: center; padding: 30px;">
+            <div class="spinner"></div>
+            <p style="color: var(--text-light); margin-top: 15px;">Начисление баллов...</p>
+        </div>
+        
+        <div id="result-message" style="display: none; text-align: center; padding: 20px; margin-top: 20px; border-radius: var(--radius);">
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Функция для смены группы
+    window.changeGroup = function(select) {
+        const groupId = select.value;
+        if (groupId) {
+            window.location.href = '/teacher/students?group_id=' + groupId;
+        }
+    };
+    
+    // Подсчет выбранных учеников
+    function updateSelectedCount() {
+        let selectedCount = 0;
+        let totalPoints = 0;
+        
+        document.querySelectorAll('tbody tr').forEach(row => {
+            let hasSelection = false;
+            let studentPoints = 0;
+            
+            row.querySelectorAll('.reason-select').forEach(select => {
+                if (select.value && select.value !== '') {
+                    hasSelection = true;
+                    const selectedOption = select.options[select.selectedIndex];
+                    const points = parseInt(selectedOption.dataset.points) || 0;
+                    studentPoints += points;
+                }
+            });
+            
+            if (hasSelection) {
+                selectedCount++;
+                totalPoints += studentPoints;
+            }
+        });
+        
+        document.getElementById('selected-count').textContent = selectedCount;
+        document.getElementById('total-points').textContent = totalPoints;
+        
+        // Активируем/деактивируем кнопку
+        const submitBtn = document.getElementById('submit-rewards');
+        if (submitBtn) {
+            submitBtn.disabled = selectedCount === 0;
+        }
+    }
+    
+    // Выбрать все (выбираем первую причину для каждого ученика)
+    document.getElementById('select-all')?.addEventListener('click', function() {
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const firstSelect = row.querySelector('.reason-select');
+            if (firstSelect && firstSelect.options.length > 1) {
+                // Выбираем первую доступную причину (не пустую)
+                for (let i = 1; i < firstSelect.options.length; i++) {
+                    if (firstSelect.options[i].value !== '') {
+                        firstSelect.value = firstSelect.options[i].value;
+                        break;
+                    }
+                }
+            }
+        });
+        updateSelectedCount();
+    });
+    
+    // Очистить все
+    document.getElementById('clear-all')?.addEventListener('click', function() {
+        document.querySelectorAll('.reason-select').forEach(select => {
+            select.value = '';
+        });
+        updateSelectedCount();
+    });
+    
+    // Отслеживание изменений в выпадающих списках
+    document.querySelectorAll('.reason-select').forEach(select => {
+        select.addEventListener('change', updateSelectedCount);
+    });
+    
+    // Отправка формы
+    document.getElementById('submit-rewards')?.addEventListener('click', function() {
+        const formData = {};
+        let hasSelection = false;
+        
+        // Собираем данные в правильном формате
+        document.querySelectorAll('tbody tr').forEach(row => {
+            const studentId = row.querySelector('.reason-select')?.name?.split('_')[1];
+            if (!studentId) return;
+            
+            formData[studentId] = [];
+            
+            row.querySelectorAll('.reason-select').forEach((select, index) => {
+                const reasonId = select.value;
+                if (reasonId && reasonId !== '') {
+                    hasSelection = true;
+                    const selectedOption = select.options[select.selectedIndex];
+                    const points = parseInt(selectedOption.dataset.points) || 0;
+                    
+                    formData[studentId].push({
+                        reason_id: parseInt(reasonId),
+                        points: points
+                    });
+                }
+            });
+            
+            // Если для этого ученика ничего не выбрано, удаляем из данных
+            if (formData[studentId].length === 0) {
+                delete formData[studentId];
+            }
+        });
+        
+        if (!hasSelection) {
+            alert('Выберите хотя бы одну причину для начисления баллов!');
+            return;
+        }
+        
+        if (!confirm(`Начислить баллы ${Object.keys(formData).length} ученикам?`)) {
+            return;
+        }
+        
+        // Показываем загрузку
+        const loading = document.getElementById('loading');
+        const resultMessage = document.getElementById('result-message');
+        const submitBtn = document.getElementById('submit-rewards');
+        
+        loading.style.display = 'block';
+        submitBtn.disabled = true;
+        resultMessage.style.display = 'none';
+        
+        // Отправляем AJAX запрос
+        fetch('/teacher/students', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(formData)
+        })
+        .then(response => response.json())
+        .then(data => {
+            loading.style.display = 'none';
+            submitBtn.disabled = false;
+            
+            if (data.success) {
+                resultMessage.className = 'flash-success';
+                resultMessage.innerHTML = '<i class="fas fa-check-circle"></i> ' + data.message;
+                resultMessage.style.display = 'block';
+                
+                // Обновляем страницу через 2 секунды
+                setTimeout(() => {
+                    location.reload();
+                }, 2000);
+            } else {
+                resultMessage.className = 'flash-error';
+                resultMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + (data.error || 'Ошибка при начислении баллов');
+                resultMessage.style.display = 'block';
+            }
+        })
+        .catch(error => {
+            loading.style.display = 'none';
+            submitBtn.disabled = false;
+            
+            resultMessage.className = 'flash-error';
+            resultMessage.innerHTML = '<i class="fas fa-exclamation-circle"></i> Ошибка соединения с сервером';
+            resultMessage.style.display = 'block';
+            console.error('Error:', error);
+        });
+    });
+    
+    // Инициализация
+    updateSelectedCount();
+});
+
+function changeGroup(select) {
+    const groupId = select.value;
+    if (groupId) {
+        window.location.href = '/teacher/students?group_id=' + groupId;
+    }
+}
+</script>
+
+<style>
+.reason-select {
+    min-width: 180px;
+}
+
+.flash-success {
+    background: var(--success-color);
+    color: white;
+    padding: 15px;
+}
+
+.flash-error {
+    background: var(--danger-color);
+    color: white;
+    padding: 15px;
+}
+
+.spinner {
+    width: 40px;
+    height: 40px;
+    border: 4px solid rgba(123, 31, 162, 0.1);
+    border-top-color: var(--primary-color);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+    margin: 0 auto;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+
+
+.rating-place-teacher {
+    width: 35px;
+    height: 35px;
+    background: var(--bg-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin: 0 auto;
+}
+
+/* Стили для компактной таблицы */
+.table-responsive {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+.reason-select {
+    min-width: 120px;
+    max-width: 140px;
+    font-size: 0.85rem;
+}
+
+/* Для экранов меньше 1200px */
+@media (max-width: 1200px) {
+    .reason-select {
+        min-width: 110px;
+        max-width: 130px;
+        font-size: 0.8rem;
+        padding: 5px 6px;
+    }
+    
+    th, td {
+        padding: 10px 8px !important;
+    }
+}
+
+/* Для экранов меньше 992px (планшеты) */
+@media (max-width: 992px) {
+    .reason-select {
+        min-width: 100px;
+        max-width: 120px;
+        font-size: 0.75rem;
+    }
+    
+    .table-responsive {
+        margin: 0 -15px;
+        padding: 0 15px;
+    }
+}
+
+/* Для экранов меньше 768px (мобильные) */
+@media (max-width: 768px) {
+    .reason-select {
+        min-width: 90px;
+        max-width: 110px;
+        font-size: 0.7rem;
+    }
+    
+    th, td {
+        padding: 8px 6px !important;
+        font-size: 0.85rem;
+    }
+    
+    .btn-sm {
+        padding: 4px 6px;
+        font-size: 0.75rem;
+    }
+}
+
+.rating-place-teacher {
+    width: 30px;
+    height: 30px;
+    background: var(--bg-color);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    margin: 0 auto;
+    font-size: 0.9rem;
+}
+
+/* Существующие стили оставляем как есть */
+.reason-select {
+    min-width: 180px;
+}
+
+/* ... остальные существующие стили ... */
+
+/* ДОБАВИТЬ ЭТО ДЛЯ РАСШИРЕНИЯ КОНТЕЙНЕРА */
+.container {
+    width: 90%;
+    max-width: 1600px;
+    margin: 0 auto;
+}
+
+/* Для экранов меньше 1200px */
+@media (max-width: 1200px) {
+    .container {
+        width: 90%;
+        max-width: none;
+    }
+    /* ... остальные медиа-запросы ... */
+}
+
+/* Для экранов меньше 992px (планшеты) */
+@media (max-width: 992px) {
+    .container {
+        width: 100%;
+        padding: 0 15px;
+    }
+    /* ... остальные медиа-запросы ... */
+}
+
+
+/* ОБНОВИТЕ ЭТИ СТИЛИ */
+.reason-select {
+    min-width: 120px;
+    max-width: 140px;
+    font-size: 0.85rem;
+    padding: 4px 6px !important;  /* Это переопределит инлайн-стиль */
+    height: 32px !important;       /* Фиксированная высота */
+    line-height: 1.2;
+}
+
+/* Для экранов меньше 1200px */
+@media (max-width: 1200px) {
+    .reason-select {
+        min-width: 110px;
+        max-width: 130px;
+        font-size: 0.8rem;
+        padding: 3px 5px !important;
+        height: 30px !important;
+    }
+}
+
+/* Для экранов меньше 768px */
+@media (max-width: 768px) {
+    .reason-select {
+        min-width: 90px;
+        max-width: 110px;
+        font-size: 0.7rem;
+        padding: 2px 4px !important;
+        height: 28px !important;
+    }
+}
+
+</style>
+{% endblock %}

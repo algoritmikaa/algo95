@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+
+{% block title %}Создание причины начисления баллов{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <h1 style="color: var(--primary-color); margin-bottom: 30px;">
+            <i class="fas fa-plus-circle"></i> Создание причины начисления баллов
+        </h1>
+        
+        <div class="card fade-in">
+            <form method="POST" action="{{ url_for('create_reward_reason') }}">
+                <div class="form-group">
+                    <label class="form-label">Причина начисления *</label>
+                    <input type="text" name="reason" class="form-control" 
+                           placeholder="Например: Приглашение друга в школу" required>
+                    <small style="color: var(--text-light); display: block; margin-top: 5px;">
+                        Эта причина будет отображаться у преподавателей при начислении баллов
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Количество баллов *</label>
+                    <input type="number" name="points" class="form-control" 
+                           min="1" value="10" required>
+                    <small style="color: var(--text-light); display: block; margin-top: 5px;">
+                        Укажите, сколько баллов будет начисляться за эту причину
+                    </small>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Порядковый номер</label>
+                    <input type="number" name="order" class="form-control" 
+                           value="{{ next_order }}" readonly>
+                    <small style="color: var(--text-light); display: block; margin-top: 5px;">
+                        Порядок отображения причины (автоматически присваивается)
+                    </small>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+                    <a href="{{ url_for('admin_reward_reasons') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </a>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Создать причину
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="card fade-in" style="margin-top: 30px;">
+            <h3 style="color: var(--primary-color); margin-bottom: 15px;">
+                <i class="fas fa-lightbulb"></i> Примеры причин
+            </h3>
+            
+            <ul style="list-style: none; padding: 0;">
+                <li style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                    <i class="fas fa-check-circle" style="color: var(--success-color); margin-right: 10px;"></i>
+                    <strong>Приглашение друга в школу</strong> - 200 баллов
+                </li>
+                <li style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                    <i class="fas fa-check-circle" style="color: var(--success-color); margin-right: 10px;"></i>
+                    <strong>Посещение урока</strong> - 10 баллов
+                </li>
+                <li style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">
+                    <i class="fas fa-check-circle" style="color: var(--success-color); margin-right: 10px;"></i>
+                    <strong>Выполнение заданий на уроке</strong> - 10 баллов
+                </li>
+                <li style="padding: 10px 0;">
+                    <i class="fas fa-check-circle" style="color: var(--success-color); margin-right: 10px;"></i>
+                    <strong>Активная работа на уроке</strong> - 15 баллов
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+{% endblock %}

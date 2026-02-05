@@ -1,0 +1,423 @@
+{% extends "base.html" %}
+
+{% block title %}Мои ученики{% endblock %}
+
+{% block breadcrumbs %}
+    <span>Мои ученики</span>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary-color);">
+            <i class="fas fa-user-graduate"></i> Мои ученики
+        </h1>
+        
+        <div style="display: flex; gap: 10px;">
+            {% if groups %}
+            <select id="group-select" class="form-control" style="width: 250px;">
+                {% for group in groups %}
+                <option value="{{ group.id }}" {% if selected_group and selected_group.id == group.id %}selected{% endif %}>
+                    {{ group.name }} ({{ students|length }} учеников)
+                </option>
+                {% endfor %}
+            </select>
+            {% endif %}
+        </div>
+    </div>
+    
+    {% if not groups %}
+    <div class="card" style="text-align: center; padding: 50px;">
+        <i class="fas fa-users-slash" style="font-size: 4rem; color: var(--text-light); margin-bottom: 20px;"></i>
+        <h3 style="color: var(--text-light); margin-bottom: 15px;">У вас нет групп</h3>
+        <p>Обратитесь к администратору, чтобы вас назначили преподавателем группы</p>
+    </div>
+    {% elif not students %}
+    <div class="card" style="text-align: center; padding: 50px;">
+        <i class="fas fa-user-graduate" style="font-size: 4rem; color: var(--text-light); margin-bottom: 20px;"></i>
+        <h3 style="color: var(--text-light); margin-bottom: 15px;">В группе нет учеников</h3>
+        <p>Добавьте учеников в группу через администратора</p>
+    </div>
+    {% else %}
+    <div class="card fade-in">
+        <div style="margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);">
+            <h3 style="color: var(--primary-color); margin-bottom: 15px;">
+                <i class="fas fa-users"></i> Группа: {{ selected_group.name }}
+            </h3>
+            <p style="color: var(--text-light);">
+                Выберите причины начисления баллов для учеников. Нажмите "Начислить баллы" внизу страницы.
+            </p>
+        </div>
+        
+        <form id="massPointsForm" method="POST">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Имя Фамилия</th>
+                            <th style="width: 200px;">Причина 1</th>
+                            <th style="width: 200px;">Причина 2</th>
+                            <th style="width: 200px;">Причина 3</th>
+                            <th style="width: 200px;">Причина 4</th>
+                            <th style="width: 100px;">Действия</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for student in students %}
+                        <tr>
+                            <td>
+                                <div style="display: flex; align-items: center; gap: 10px;">
+                                    <div style="width: 40px; height: 40px; background: var(--primary-color); 
+                                                border-radius: 50%; display: flex; align-items: center; 
+                                                justify-content: center;">
+                                        <i class="fas fa-user" style="color: white;"></i>
+                                    </div>
+                                    <div>
+                                        <strong>{{ student.first_name }} {{ student.last_name }}</strong><br>
+                                        <small style="color: var(--text-light);">
+                                            {{ student.points }} баллов ({{ student.earned_points }} начислено)
+                                        </small>
+                                    </div>
+                                </div>
+                            </td>
+                            
+                            <!-- Выпадающие списки причин -->
+                            {% for i in range(1, 5) %}
+                            <td>
+                                <select name="student_{{ student.id }}" class="form-control reason-select" data-student="{{ student.id }}">
+                                    <option value="0">-- Выберите причину --</option>
+                                    {% for reason in mass_reward_reasons %}
+                                    <option value="{{ reason.id }}" data-points="{{ reason.points }}">
+                                        {{ reason.reason }} (+{{ reason.points }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <div class="selected-points" id="points_{{ student.id }}_{{ i }}" 
+                                     style="font-size: 0.8rem; color: var(--success-color); margin-top: 5px; display: none;">
+                                    +<span class="points-value">0</span> баллов
+                                </div>
+                            </td>
+                            {% endfor %}
+                            
+                            <td>
+                                <a href="{{ url_for('user_detail', user_id=student.id) }}" 
+                                   class="btn btn-primary btn-sm">
+                                    <i class="fas fa-eye"></i> Профиль
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                    <div>
+                        <h4 style="color: var(--primary-color); margin-bottom: 10px;">
+                            <i class="fas fa-calculator"></i> Итог начисления
+                        </h4>
+                        <div style="display: flex; gap: 20px;">
+                            <div>
+                                <span style="color: var(--text-light);">Выбрано учеников:</span>
+                                <span id="selectedStudentsCount" style="font-weight: bold; margin-left: 10px;">0</span>
+                            </div>
+                            <div>
+                                <span style="color: var(--text-light);">Всего баллов:</span>
+                                <span id="totalPoints" style="font-weight: bold; color: var(--success-color); margin-left: 10px;">0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <button type="submit" class="btn btn-primary" id="submitPointsBtn">
+                            <i class="fas fa-check-circle"></i> Начислить баллы выбранным
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </form>
+    </div>
+    
+    <div class="row" style="margin-top: 30px;">
+        <div class="col-6">
+            <div class="card fade-in">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-info-circle"></i> Инструкция
+                </h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <div class="instruction-card">
+                        <div class="instruction-number">1</div>
+                        <div>
+                            <h4 style="margin-bottom: 5px;">Выберите причины</h4>
+                            <p style="color: var(--text-light); margin-bottom: 0; font-size: 0.9rem;">
+                                Для каждого ученика выберите до 4 причин начисления баллов
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="instruction-card">
+                        <div class="instruction-number">2</div>
+                        <div>
+                            <h4 style="margin-bottom: 5px;">Посмотрите итог</h4>
+                            <p style="color: var(--text-light); margin-bottom: 0; font-size: 0.9rem;">
+                                Система автоматически посчитает общее количество баллов
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="instruction-card">
+                        <div class="instruction-number">3</div>
+                        <div>
+                            <h4 style="margin-bottom: 5px;">Начислите баллы</h4>
+                            <p style="color: var(--text-light); margin-bottom: 0; font-size: 0.9rem;">
+                                Нажмите кнопку "Начислить баллы" для подтверждения
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-6">
+            <div class="card fade-in">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-star"></i> Доступные причины
+                </h3>
+                
+                <div style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
+                    {% for reason in mass_reward_reasons %}
+                    <div class="reason-card">
+                        <div style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <strong>{{ reason.reason }}</strong>
+                                <div style="color: var(--text-light); font-size: 0.9rem;">
+                                    ID: {{ reason.id }}
+                                </div>
+                            </div>
+                            <div style="font-weight: bold; color: var(--success-color);">
+                                +{{ reason.points }}
+                            </div>
+                        </div>
+                    </div>
+                    {% if not loop.last %}
+                    <div style="height: 1px; background: var(--border-color); margin: 10px 0;"></div>
+                    {% endif %}
+                    {% endfor %}
+                </div>
+                
+                <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <p style="color: var(--text-light); font-size: 0.9rem; text-align: center;">
+                        <i class="fas fa-info-circle"></i>
+                        Для массового начисления доступны только первые 4 причины из списка администратора
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+
+<style>
+.reason-select {
+    transition: all 0.3s ease;
+}
+
+.reason-select:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 0.2rem rgba(123, 31, 162, 0.25);
+}
+
+.selected-points {
+    text-align: center;
+    padding: 5px;
+    background: rgba(76, 175, 80, 0.1);
+    border-radius: var(--radius);
+}
+
+.instruction-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 15px;
+    background: rgba(123, 31, 162, 0.05);
+    border-radius: var(--radius);
+}
+
+.instruction-number {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+    font-size: 1.2rem;
+    flex-shrink: 0;
+}
+
+.reason-card {
+    padding: 12px;
+    background: rgba(123, 31, 162, 0.05);
+    border-radius: var(--radius);
+    transition: background-color 0.3s;
+}
+
+.reason-card:hover {
+    background: rgba(123, 31, 162, 0.1);
+}
+
+@media (max-width: 768px) {
+    .table-responsive {
+        overflow-x: auto;
+    }
+    
+    #group-select {
+        width: 100% !important;
+        margin-top: 10px;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const groupSelect = document.getElementById('group-select');
+    const reasonSelects = document.querySelectorAll('.reason-select');
+    const massPointsForm = document.getElementById('massPointsForm');
+    const selectedStudentsCount = document.getElementById('selectedStudentsCount');
+    const totalPoints = document.getElementById('totalPoints');
+    const submitPointsBtn = document.getElementById('submitPointsBtn');
+    
+    // Объект для хранения выбранных баллов по ученикам
+    const studentPoints = {};
+    
+    // Изменение группы
+    if (groupSelect) {
+        groupSelect.addEventListener('change', function() {
+            const groupId = this.value;
+            window.location.href = `{{ url_for('teacher_students') }}?group_id=${groupId}`;
+        });
+    }
+    
+    // Обработка выбора причин
+    reasonSelects.forEach(select => {
+        select.addEventListener('change', function() {
+            const studentId = this.dataset.student;
+            const reasonId = this.value;
+            const selectIndex = Array.from(this.parentNode.parentNode.children).indexOf(this.parentNode);
+            
+            // Получаем элемент для отображения баллов
+            const pointsDisplay = document.getElementById(`points_${studentId}_${selectIndex}`);
+            
+            if (reasonId && reasonId !== '0') {
+                // Получаем выбранный option
+                const selectedOption = this.options[this.selectedIndex];
+                const points = parseInt(selectedOption.dataset.points);
+                
+                // Обновляем отображение баллов
+                pointsDisplay.querySelector('.points-value').textContent = points;
+                pointsDisplay.style.display = 'block';
+                
+                // Сохраняем баллы для ученика
+                if (!studentPoints[studentId]) {
+                    studentPoints[studentId] = {};
+                }
+                studentPoints[studentId][selectIndex] = points;
+            } else {
+                // Скрываем отображение баллов
+                pointsDisplay.style.display = 'none';
+                
+                // Удаляем баллы для ученика
+                if (studentPoints[studentId]) {
+                    delete studentPoints[studentId][selectIndex];
+                    if (Object.keys(studentPoints[studentId]).length === 0) {
+                        delete studentPoints[studentId];
+                    }
+                }
+            }
+            
+            // Обновляем итоговую статистику
+            updateStatistics();
+        });
+    });
+    
+    // Функция обновления статистики
+    function updateStatistics() {
+        let totalStudents = Object.keys(studentPoints).length;
+        let totalPointsSum = 0;
+        
+        // Считаем общую сумму баллов
+        for (const studentId in studentPoints) {
+            for (const index in studentPoints[studentId]) {
+                totalPointsSum += studentPoints[studentId][index];
+            }
+        }
+        
+        // Обновляем отображение
+        selectedStudentsCount.textContent = totalStudents;
+        totalPoints.textContent = totalPointsSum;
+        
+        // Активируем/деактивируем кнопку
+        submitPointsBtn.disabled = totalStudents === 0;
+    }
+    
+    // Обработка отправки формы
+    massPointsForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        if (Object.keys(studentPoints).length === 0) {
+            alert('Выберите хотя бы одного ученика для начисления баллов');
+            return;
+        }
+        
+        if (!confirm(`Начислить баллы ${Object.keys(studentPoints).length} ученикам?`)) {
+            return;
+        }
+        
+        // Собираем данные для отправки
+        const formData = new FormData();
+        for (const studentId in studentPoints) {
+            // Берем первую причину для каждого ученика (по условиям задачи)
+            const firstIndex = Object.keys(studentPoints[studentId])[0];
+            const reasonId = document.querySelector(`select[name="student_${studentId}"]`).value;
+            formData.append(`student_${studentId}`, reasonId);
+        }
+        
+        // Отправляем данные
+        submitPointsBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Начисляем...';
+        submitPointsBtn.disabled = true;
+        
+        fetch('{{ url_for("teacher_students") }}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message || 'Баллы успешно начислены');
+                location.reload();
+            } else {
+                alert(data.error || 'Произошла ошибка');
+                submitPointsBtn.innerHTML = '<i class="fas fa-check-circle"></i> Начислить баллы выбранным';
+                submitPointsBtn.disabled = false;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Произошла ошибка при начислении баллов');
+            submitPointsBtn.innerHTML = '<i class="fas fa-check-circle"></i> Начислить баллы выбранным';
+            submitPointsBtn.disabled = false;
+        });
+    });
+    
+    // Инициализация статистики
+    updateStatistics();
+});
+</script>
+{% endblock %}

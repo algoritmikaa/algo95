@@ -1,0 +1,296 @@
+{% extends "base.html" %}
+
+{% block title %}Панель преподавателя{% endblock %}
+
+{% block breadcrumbs %}
+    <span>Панель управления</span>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="color: var(--primary-color); margin-bottom: 30px;">
+        <i class="fas fa-chalkboard-teacher"></i> Панель преподавателя
+    </h1>
+    
+    <div class="stats-grid">
+        <div class="stat-card fade-in">
+            <h3 class="stat-number">{{ groups|length }}</h3>
+            <p>Мои группы</p>
+        </div>
+        
+        <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+            <h3 class="stat-number">{{ total_students }}</h3>
+            <p>Мои ученики</p>
+        </div>
+        
+        <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+            <h3 class="stat-number">
+                {% set total_points = namespace(value=0) %}
+                {% for group in groups %}
+                    {% for student in group.students %}
+                        {% set total_points.value = total_points.value + student.points %}
+                    {% endfor %}
+                {% endfor %}
+                {{ total_points.value }}
+            </h3>
+            <p>Всего баллов у учеников</p>
+        </div>
+        
+        <div class="stat-card fade-in" style="animation-delay: 0.3s;">
+            <h3 class="stat-number">
+                {% if total_students > 0 %}
+                    {{ (total_points.value / total_students)|round|int }}
+                {% else %}
+                    0
+                {% endif %}
+            </h3>
+            <p>Средний балл на ученика</p>
+        </div>
+    </div>
+    
+    <div class="row" style="margin-top: 40px;">
+        <div class="col-6">
+            <div class="card fade-in">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-layer-group"></i> Мои группы
+                </h3>
+                
+                {% if groups %}
+                <div class="table-responsive">
+                    <table class="table">
+                        <thead>
+                            <tr>
+                                <th>Название группы</th>
+                                <th>Учеников</th>
+                                <th>Средний балл</th>
+                                <th>Действия</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for group in groups %}
+                            <tr>
+                                <td>
+                                    <strong>{{ group.name }}</strong>
+                                </td>
+                                <td>{{ group.students|length }}</td>
+                                <td>
+                                    {% if group.students %}
+                                        {% set group_points = namespace(value=0) %}
+                                        {% for student in group.students %}
+                                            {% set group_points.value = group_points.value + student.points %}
+                                        {% endfor %}
+                                        {{ (group_points.value / group.students|length)|round|int }}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{{ url_for('teacher_students') }}?group_id={{ group.id }}" 
+                                    class="btn btn-primary btn-sm">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 30px; color: var(--text-light);">
+                    <i class="fas fa-users-slash" style="font-size: 2.5rem; margin-bottom: 15px;"></i>
+                    <h4>У вас пока нет групп</h4>
+                    <p>Обратитесь к администратору для назначения групп</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="card fade-in" style="margin-top: 20px;">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-gift"></i> Система начисления баллов
+                </h3>
+                
+                <div style="background: linear-gradient(135deg, rgba(123, 31, 162, 0.1), rgba(156, 39, 176, 0.1)); 
+                            padding: 20px; border-radius: var(--radius);">
+                    <p style="margin-bottom: 15px; font-weight: 500;">Стандартные начисления:</p>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px;">
+                        <div style="background: white; padding: 10px; border-radius: var(--radius);">
+                            <div style="font-weight: bold; color: var(--primary-color);">+10</div>
+                            <div style="font-size: 0.9rem;">Посещение урока</div>
+                        </div>
+                        <div style="background: white; padding: 10px; border-radius: var(--radius);">
+                            <div style="font-weight: bold; color: var(--primary-color);">+5</div>
+                            <div style="font-size: 0.9rem;">Пунктуальность</div>
+                        </div>
+                        <div style="background: white; padding: 10px; border-radius: var(--radius);">
+                            <div style="font-weight: bold; color: var(--primary-color);">+10</div>
+                            <div style="font-size: 0.9rem;">Ответы на вопросы</div>
+                        </div>
+                        <div style="background: white; padding: 10px; border-radius: var(--radius);">
+                            <div style="font-weight: bold; color: var(--primary-color);">+10</div>
+                            <div style="font-size: 0.9rem;">Задания на уроке</div>
+                        </div>
+                    </div>
+                    
+                    <p style="margin-bottom: 0; font-size: 0.9rem; color: var(--text-light);">
+                        <i class="fas fa-info-circle"></i> 
+                        Вы также можете начислять произвольное количество баллов за особые достижения
+                    </p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-6">
+            <div class="card fade-in">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-bolt"></i> Быстрые действия
+                </h3>
+                
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <a href="{{ url_for('teacher_students') }}" class="quick-action-card">
+                        <div style="background: var(--primary-color); width: 50px; height: 50px; 
+                                    border-radius: 12px; display: flex; align-items: center; 
+                                    justify-content: center; margin-bottom: 10px;">
+                            <i class="fas fa-user-graduate" style="color: white; font-size: 1.5rem;"></i>
+                        </div>
+                        <h4>Мои ученики</h4>
+                        <p>Просмотр и управление баллами</p>
+                    </a>
+                    
+                    <a href="{{ url_for('teacher_shop') }}" class="quick-action-card">
+                        <div style="background: var(--warning-color); width: 50px; height: 50px; 
+                                    border-radius: 12px; display: flex; align-items: center; 
+                                    justify-content: center; margin-bottom: 10px;">
+                            <i class="fas fa-store" style="color: white; font-size: 1.5rem;"></i>
+                        </div>
+                        <h4>Магазин</h4>
+                        <p>Просмотр доступных товаров</p>
+                    </a>
+                </div>
+                
+                <div style="margin-top: 30px;">
+    <h4 style="color: var(--primary-color); margin-bottom: 15px;">
+        <i class="fas fa-trophy"></i> Топ учеников по баллам
+    </h4>
+    
+    {% set top_students_list = [] %}
+    {% for group in groups %}
+        {% for student in group.students %}
+            {{ top_students_list.append({'first_name': student.first_name, 'last_name': student.last_name, 
+                                        'points': student.points, 'group': student.group}) or '' }}
+        {% endfor %}
+    {% endfor %}
+    
+    {% if top_students_list %}
+        {% set sorted_students = top_students_list|sort(attribute='points', reverse=true) %}
+        {% set top_5_students = sorted_students[:5] %}
+        
+        <div style="display: flex; flex-direction: column; gap: 10px;">
+            {% for student in top_5_students %}
+            <div style="display: flex; align-items: center; justify-content: space-between; 
+                        padding: 12px; background: rgba(123, 31, 162, 0.05); 
+                        border-radius: var(--radius);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 35px; height: 35px; background: 
+                        {% if loop.index == 1 %}gold
+                        {% elif loop.index == 2 %}silver
+                        {% elif loop.index == 3 %}#CD7F32
+                        {% else %}var(--primary-color){% endif %}; 
+                        border-radius: 50%; display: flex; align-items: center; 
+                        justify-content: center; color: white; font-weight: bold;">
+                        {{ loop.index }}
+                    </div>
+                    <div>
+                        <strong>{{ student.first_name }} {{ student.last_name }}</strong><br>
+                        <small style="color: var(--text-light);">
+                            {{ student.group.name if student.group else 'Без группы' }}
+                        </small>
+                    </div>
+                </div>
+                <div style="font-weight: bold; color: var(--primary-color);">
+                    {{ student.points }} баллов
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+    <div style="text-align: center; padding: 20px; color: var(--text-light);">
+        <i class="fas fa-user-graduate" style="font-size: 2rem; margin-bottom: 10px;"></i>
+        <p>Нет учеников в группах</p>
+    </div>
+    {% endif %}
+</div>
+            </div>
+            
+            <div class="card fade-in" style="margin-top: 20px;">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-calendar-alt"></i> Предстоящие события
+                </h3>
+                
+                <div style="background: linear-gradient(135deg, rgba(76, 175, 80, 0.1), rgba(139, 195, 74, 0.1)); 
+                            padding: 20px; border-radius: var(--radius);">
+                    <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 15px;">
+                        <div style="background: var(--success-color); color: white; width: 50px; height: 50px; 
+                                    border-radius: 12px; display: flex; flex-direction: column; 
+                                    align-items: center; justify-content: center; flex-shrink: 0;">
+                            <div style="font-weight: bold; font-size: 1.2rem;">15</div>
+                            <div style="font-size: 0.7rem;">дек</div>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 5px;">Награждение месяца</h4>
+                            <p style="color: var(--text-light); margin-bottom: 0;">
+                                Награждение лучших учеников месяца
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div style="display: flex; align-items: center; gap: 15px;">
+                        <div style="background: var(--primary-color); color: white; width: 50px; height: 50px; 
+                                    border-radius: 12px; display: flex; flex-direction: column; 
+                                    align-items: center; justify-content: center; flex-shrink: 0;">
+                            <div style="font-weight: bold; font-size: 1.2rem;">20</div>
+                            <div style="font-size: 0.7rem;">дек</div>
+                        </div>
+                        <div>
+                            <h4 style="margin-bottom: 5px;">Новые поступления</h4>
+                            <p style="color: var(--text-light); margin-bottom: 0;">
+                                Новые товары в магазине баллов
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.quick-action-card {
+    background: var(--card-bg);
+    padding: 20px;
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    display: block;
+}
+
+.quick-action-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary-color);
+    box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
+}
+
+.quick-action-card h4 {
+    color: var(--primary-color);
+    margin-bottom: 5px;
+}
+
+.quick-action-card p {
+    color: var(--text-light);
+    font-size: 0.9rem;
+    margin-bottom: 0;
+}
+</style>
+{% endblock %}

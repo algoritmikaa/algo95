@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Алгоритмика - {% block title %}{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar">
+        <div class="container">
+            <a href="/" class="logo">
+                <img src="{{ url_for('static', filename='images/logo.png') }}" alt="Алгоритмика" style="height: 40px;">
+                <span>Алгоритмика</span>
+            </a>
+            
+            {% if current_user.is_authenticated %}
+            <div class="user-menu">
+                <span class="user-name">{{ current_user.first_name }} {{ current_user.last_name }}</span>
+                <span class="user-role">{{ current_user.role|capitalize }}</span>
+                {% if current_user.role == 'student' %}
+                <span class="user-points">{{ current_user.points }} баллов</span>
+                {% endif %}
+                <a href="{{ url_for('logout') }}" class="btn-logout" title="Выйти">
+                    <i class="fas fa-sign-out-alt"></i>
+                </a>
+            </div>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Боковая навигация и основной контент -->
+    <div class="main-wrapper">
+        {% if current_user.is_authenticated %}
+        <!-- Боковая панель навигации -->
+        <aside class="sidebar">
+            <div class="sidebar-content">
+                <div class="sidebar-header">
+                    <h3>Меню</h3>
+                </div>
+                
+                <nav class="sidebar-nav">
+                    {% if current_user.role == 'admin' %}
+                    <!-- Меню администратора -->
+                    <div class="nav-section">
+                        <h4 class="nav-section-title">
+                            <i class="fas fa-users-cog"></i> Администрирование
+                        </h4>
+                        <ul>
+                            <li>
+                                <a href="{{ url_for('admin_dashboard') }}" 
+                                   class="{% if request.endpoint == 'admin_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-tachometer-alt"></i> Панель управления
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('admin_users') }}" 
+                                   class="{% if request.endpoint in ['admin_users', 'create_users', 'user_detail'] %}active{% endif %}">
+                                    <i class="fas fa-users"></i> Пользователи
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('admin_groups') }}" 
+                                   class="{% if request.endpoint in ['admin_groups', 'create_group', 'group_detail'] %}active{% endif %}">
+                                    <i class="fas fa-layer-group"></i> Группы
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('admin_reward_reasons') }}" 
+                                   class="{% if request.endpoint in ['admin_reward_reasons', 'create_reward_reason', 'edit_reward_reason'] %}active{% endif %}">
+                                    <i class="fas fa-star"></i> Причины баллов
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('admin_tips') }}" 
+                                   class="{% if request.endpoint == 'admin_tips' %}active{% endif %}">
+                                    <i class="fas fa-lightbulb"></i> Советы ученикам
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="nav-section">
+                        <h4 class="nav-section-title">
+                            <i class="fas fa-store"></i> Магазин
+                        </h4>
+                        <ul>
+                            <li>
+                                <a href="{{ url_for('admin_shop') }}" 
+                                   class="{% if request.endpoint in ['admin_shop', 'product_detail'] %}active{% endif %}">
+                                    <i class="fas fa-boxes"></i> Товары
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('admin_orders') }}" 
+                                   class="{% if request.endpoint in ['admin_orders', 'order_detail'] %}active{% endif %}">
+                                    <i class="fas fa-shopping-cart"></i> Заказы
+                                    {% if stats and stats.pending_orders > 0 %}
+                                    <span class="badge">{{ stats.pending_orders }}</span>
+                                    {% endif %}
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    {% elif current_user.role == 'teacher' %}
+                    <!-- Меню преподавателя -->
+                    <div class="nav-section">
+                        <h4 class="nav-section-title">
+                            <i class="fas fa-chalkboard-teacher"></i> Преподаватель
+                        </h4>
+                        <ul>
+                            <li>
+                                <a href="{{ url_for('teacher_dashboard') }}" 
+                                class="{% if request.endpoint == 'teacher_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-tachometer-alt"></i> Панель управления
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('teacher_students') }}" 
+                                class="{% if request.endpoint in ['teacher_students', 'user_detail'] %}active{% endif %}">
+                                    <i class="fas fa-user-graduate"></i> Мои ученики
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('teacher_shop') }}" 
+                                class="{% if request.endpoint == 'teacher_shop' %}active{% endif %}">
+                                    <i class="fas fa-store"></i> Магазин
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    {% elif current_user.role == 'student' %}
+                    <!-- Меню ученика -->
+                    <div class="nav-section">
+                        <h4 class="nav-section-title">
+                            <i class="fas fa-user-graduate"></i> Ученик
+                        </h4>
+                        <ul>
+                            <li>
+                                <a href="{{ url_for('student_dashboard') }}" 
+                                   class="{% if request.endpoint == 'student_dashboard' %}active{% endif %}">
+                                    <i class="fas fa-home"></i> Главная
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('student_profile') }}" 
+                                   class="{% if request.endpoint == 'student_profile' %}active{% endif %}">
+                                    <i class="fas fa-user-circle"></i> Мой профиль
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('student_group_rating') }}" 
+                                   class="{% if request.endpoint == 'student_group_rating' %}active{% endif %}">
+                                    <i class="fas fa-trophy"></i> Рейтинг группы
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('student_shop') }}" 
+                                   class="{% if request.endpoint == 'student_shop' %}active{% endif %}">
+                                    <i class="fas fa-shopping-cart"></i> Магазин
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    {% endif %}
+                    
+                    <!-- Общее меню -->
+                    <div class="nav-section">
+                        <h4 class="nav-section-title">
+                            <i class="fas fa-cog"></i> Система
+                        </h4>
+                        <ul>
+                            <li>
+                                <a href="{{ url_for('index') }}">
+                                    <i class="fas fa-home"></i> На главную
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{{ url_for('logout') }}">
+                                    <i class="fas fa-sign-out-alt"></i> Выйти
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                </nav>
+                
+                <div class="sidebar-footer">
+                    <div style="text-align: center; padding: 15px; color: var(--text-light); font-size: 0.8rem;">
+                        <p>Алгоритмика © 2024</p>
+                        <p>Система баллов</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        {% endif %}
+
+        <!-- Основной контент -->
+        <main class="main-content {% if not current_user.is_authenticated %}full-width{% endif %}">
+            <!-- Хлебные крошки -->
+            {% if current_user.is_authenticated %}
+            <div class="breadcrumbs">
+                <div class="container">
+                    <a href="{{ url_for('index') }}">Главная</a>
+                    {% block breadcrumbs %}{% endblock %}
+                </div>
+            </div>
+            {% endif %}
+            
+            <!-- Уведомления -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                <div class="flash-messages">
+                    {% for category, message in messages %}
+                    <div class="flash-message flash-{{ category }}">
+                        <i class="fas fa-{% if category == 'success' %}check-circle{% elif category == 'error' %}exclamation-circle{% else %}info-circle{% endif %}"></i>
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            {% endwith %}
+            
+            <!-- Контент страницы -->
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Футер (только для неавторизованных пользователей) -->
+    {% if not current_user.is_authenticated %}
+    <footer class="footer">
+        <div class="container">
+            <p>© 2024 Международная школа программирования "Алгоритмика"</p>
+            <p>Все права защищены</p>
+        </div>
+    </footer>
+    {% endif %}
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

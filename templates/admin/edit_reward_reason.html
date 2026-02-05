@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование причины начисления баллов{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="max-width: 600px; margin: 0 auto;">
+        <h1 style="color: var(--primary-color); margin-bottom: 30px;">
+            <i class="fas fa-edit"></i> Редактирование причины начисления баллов
+        </h1>
+        
+        <div class="card fade-in">
+            <form method="POST" action="{{ url_for('edit_reward_reason', reason_id=reason.id) }}">
+                <div class="form-group">
+                    <label class="form-label">Причина начисления *</label>
+                    <input type="text" name="reason" class="form-control" 
+                           value="{{ reason.reason }}" required>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Количество баллов *</label>
+                    <input type="number" name="points" class="form-control" 
+                           min="1" value="{{ reason.points }}" required>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; margin-top: 30px;">
+                    <a href="{{ url_for('admin_reward_reasons') }}" class="btn btn-secondary">
+                        <i class="fas fa-arrow-left"></i> Назад
+                    </a>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fas fa-save"></i> Сохранить изменения
+                    </button>
+                </div>
+            </form>
+        </div>
+        
+        <div class="card fade-in" style="margin-top: 30px;">
+            <h3 style="color: var(--primary-color); margin-bottom: 15px;">
+                <i class="fas fa-info-circle"></i> Информация
+            </h3>
+            
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-light);">Дата создания:</span>
+                    <span>{{ reason.created_at.strftime('%d.%m.%Y %H:%M') }}</span>
+                </div>
+                
+                <div style="background: rgba(123, 31, 162, 0.05); padding: 15px; border-radius: var(--radius);">
+                    <p style="margin-bottom: 0; color: var(--text-light);">
+                        <i class="fas fa-exclamation-triangle" style="color: var(--warning-color);"></i>
+                        Изменение причины не повлияет на уже начисленные баллы в истории.
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

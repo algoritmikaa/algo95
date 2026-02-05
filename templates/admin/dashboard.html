@@ -1,0 +1,95 @@
+{% extends "base.html" %}
+
+{% block title %}Панель администратора{% endblock %}
+
+{% block content %}
+<div class="container">
+    <h1 style="color: var(--primary-color); margin-bottom: 30px;">
+        <i class="fas fa-tachometer-alt"></i> Панель администратора
+    </h1>
+    
+    <div class="stats-grid">
+        <div class="stat-card fade-in">
+            <h3 class="stat-number">{{ stats.total_users }}</h3>
+            <p>Всего пользователей</p>
+        </div>
+        
+        <div class="stat-card fade-in" style="animation-delay: 0.1s;">
+            <h3 class="stat-number">{{ stats.total_students }}</h3>
+            <p>Учеников</p>
+        </div>
+        
+        <div class="stat-card fade-in" style="animation-delay: 0.2s;">
+            <h3 class="stat-number">{{ stats.total_teachers }}</h3>
+            <p>Преподавателей</p>
+        </div>
+        
+        <div class="stat-card fade-in" style="animation-delay: 0.3s;">
+            <h3 class="stat-number">{{ stats.total_products }}</h3>
+            <p>Товаров</p>
+        </div>
+    </div>
+    
+    <div class="row" style="margin-top: 40px;">
+        <div class="col-4">
+            <div class="card fade-in" style="height: 100%;">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-users"></i> Быстрые действия
+                </h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <a href="{{ url_for('admin_users') }}" class="btn btn-primary">
+                        <i class="fas fa-user-plus"></i> Управление пользователями
+                    </a>
+                    
+                    <a href="{{ url_for('admin_groups') }}" class="btn btn-primary">
+                        <i class="fas fa-layer-group"></i> Управление группами
+                    </a>
+                    
+                    <a href="{{ url_for('admin_shop') }}" class="btn btn-primary">
+                        <i class="fas fa-store"></i> Управление магазином
+                    </a>
+                    
+                    <a href="{{ url_for('admin_orders') }}" class="btn btn-primary">
+                        <i class="fas fa-shopping-cart"></i> Управление заказами
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-8">
+            <div class="card fade-in" style="height: 100%;">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-chart-line"></i> Система баллов
+                </h3>
+                
+                <div style="background: linear-gradient(135deg, rgba(123, 31, 162, 0.1), rgba(156, 39, 176, 0.1)); padding: 20px; border-radius: var(--radius);">
+                    <h4>Как работают баллы:</h4>
+                    <ul style="margin-top: 15px; padding-left: 20px;">
+                        <li>Посещение урока – 10 баллов</li>
+                        <li>Пунктуальность – 5 баллов</li>
+                        <li>Ответы на вопросы – 10 баллов</li>
+                        <li>Выполнение заданий – 10 баллов</li>
+                        <li>Домашние задания – 10 баллов</li>
+                        <li>Индивидуальный проект – 10 баллов</li>
+                    </ul>
+                    
+                    <p style="margin-top: 15px; font-style: italic;">
+                        * Преподаватели могут начислять и списывать баллы вручную
+                    </p>
+                </div>
+                
+                {% if stats.pending_orders > 0 %}
+                <div style="background: var(--warning-color); color: white; padding: 15px; border-radius: var(--radius); margin-top: 20px;">
+                    <h4><i class="fas fa-exclamation-circle"></i> Внимание!</h4>
+                    <p>Есть {{ stats.pending_orders }} ожидающих заказов. 
+                    <a href="{{ url_for('admin_orders') }}" style="color: white; text-decoration: underline;">
+                        Перейти к обработке
+                    </a></p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

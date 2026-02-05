@@ -1,0 +1,371 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - Ученик{% endblock %}
+
+{% block breadcrumbs %}
+    <span>Главная</span>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="welcome-banner fade-in">
+        <div class="welcome-content">
+            <h1 style="color: var(--secondary-color); margin-bottom: 10px;">
+                Привет, {{ current_user.first_name }}!
+            </h1>
+            <p style="color: rgba(255, 255, 255, 0.9); font-size: 1.1rem;">
+                Добро пожаловать в систему баллов Алгоритмики
+            </p>
+        </div>
+        
+        <div class="points-display">
+            <div class="points-circle">
+                <span class="points-number">{{ current_user.points }}</span>
+                <span class="points-label">баллов</span>
+            </div>
+            <p style="color: rgba(255, 255, 255, 0.8); text-align: center; margin-top: 10px;">
+                Ваш текущий баланс
+            </p>
+        </div>
+    </div>
+    
+    <div class="row" style="margin-top: 30px;">
+        <div class="col-4">
+            <div class="card fade-in" style="height: 100%;">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-graduation-cap"></i> Моя группа
+                </h3>
+                
+                {% if current_user.group %}
+                <div style="text-align: center; padding: 20px;">
+                    <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); 
+                                border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+                                margin: 0 auto 20px; color: white; font-size: 2rem;">
+                        <i class="fas fa-users"></i>
+                    </div>
+                    
+                    <h4 style="color: var(--primary-color); margin-bottom: 10px;">
+                        {{ current_user.group.name }}
+                    </h4>
+                    
+                    {% if current_user.group.teacher %}
+                    <p style="color: var(--text-light);">
+                        Преподаватель:<br>
+                        <strong>{{ current_user.group.teacher.first_name }} {{ current_user.group.teacher.last_name }}</strong>
+                    </p>
+                    {% endif %}
+                    
+                    <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                        <p style="color: var(--text-light); font-size: 0.9rem;">
+                            <i class="fas fa-info-circle"></i>
+                            Всего в группе: {{ current_user.group.students|length }} учеников
+                        </p>
+                    </div>
+                </div>
+                {% else %}
+                <div style="text-align: center; padding: 30px; color: var(--text-light);">
+                    <i class="fas fa-users-slash" style="font-size: 2.5rem; margin-bottom: 15px;"></i>
+                    <h4>Вы не в группе</h4>
+                    <p>Обратитесь к администратору или преподавателю</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-4">
+            <div class="card fade-in" style="height: 100%;">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-bolt"></i> Быстрые действия
+                </h3>
+                
+                <div style="display: flex; flex-direction: column; gap: 15px;">
+                    <a href="{{ url_for('student_shop') }}" class="quick-action-btn">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="background: var(--primary-color); width: 50px; height: 50px; 
+                                        border-radius: 12px; display: flex; align-items: center; 
+                                        justify-content: center; flex-shrink: 0;">
+                                <i class="fas fa-shopping-cart" style="color: white; font-size: 1.3rem;"></i>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; color: var(--text-color);">Магазин</h4>
+                                <p style="margin: 5px 0 0 0; color: var(--text-light); font-size: 0.9rem;">
+                                    Купить товары за баллы
+                                </p>
+                            </div>
+                            <i class="fas fa-chevron-right" style="margin-left: auto; color: var(--text-light);"></i>
+                        </div>
+                    </a>
+                    
+                    <a href="{{ url_for('student_profile') }}" class="quick-action-btn">
+                        <div style="display: flex; align-items: center; gap: 15px;">
+                            <div style="background: var(--success-color); width: 50px; height: 50px; 
+                                        border-radius: 12px; display: flex; align-items: center; 
+                                        justify-content: center; flex-shrink: 0;">
+                                <i class="fas fa-user-circle" style="color: white; font-size: 1.3rem;"></i>
+                            </div>
+                            <div>
+                                <h4 style="margin: 0; color: var(--text-color);">Мой профиль</h4>
+                                <p style="margin: 5px 0 0 0; color: var(--text-light); font-size: 0.9rem;">
+                                    История баллов и информация
+                                </p>
+                            </div>
+                            <i class="fas fa-chevron-right" style="margin-left: auto; color: var(--text-light);"></i>
+                        </div>
+                    </a>
+                </div>
+                
+                <div style="margin-top: 30px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <h4 style="color: var(--primary-color); margin-bottom: 15px;">
+                        <i class="fas fa-trophy"></i> Как получить баллы?
+                    </h4>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="background: rgba(76, 175, 80, 0.1); color: var(--success-color); 
+                                        width: 30px; height: 30px; border-radius: 50%; display: flex; 
+                                        align-items: center; justify-content: center; font-weight: bold;">
+                                +10
+                            </div>
+                            <span>Посещение урока</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="background: rgba(76, 175, 80, 0.1); color: var(--success-color); 
+                                        width: 30px; height: 30px; border-radius: 50%; display: flex; 
+                                        align-items: center; justify-content: center; font-weight: bold;">
+                                +5
+                            </div>
+                            <span>Пунктуальность</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <div style="background: rgba(76, 175, 80, 0.1); color: var(--success-color); 
+                                        width: 30px; height: 30px; border-radius: 50%; display: flex; 
+                                        align-items: center; justify-content: center; font-weight: bold;">
+                                +10
+                            </div>
+                            <span>Ответы на вопросы</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-4">
+            <div class="card fade-in" style="height: 100%;">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-history"></i> Последние операции
+                </h3>
+                
+                {% if history %}
+                <div style="max-height: 300px; overflow-y: auto; padding-right: 10px;">
+                    {% for record in history %}
+                    <div class="history-item {% if loop.index > 5 %}hidden-item{% endif %}">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <span style="font-weight: 500;">{{ record.reason }}</span>
+                            <span style="color: {% if record.points_change > 0 %}var(--success-color){% else %}var(--danger-color){% endif %}; 
+                                      font-weight: bold;">
+                                {% if record.points_change > 0 %}+{% endif %}{{ record.points_change }}
+                            </span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <small style="color: var(--text-light);">
+                                {{ record.changed_by.first_name }} {{ record.changed_by.last_name }}
+                            </small>
+                            <small style="color: var(--text-light);">
+                                {{ record.created_at.strftime('%d.%m.%Y %H:%M') }}
+                            </small>
+                        </div>
+                        {% if not loop.last %}
+                        <div style="height: 1px; background: var(--border-color); margin: 10px 0;"></div>
+                        {% endif %}
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                {% if history|length > 5 %}
+                <button id="showMoreHistory" class="btn btn-secondary" 
+                        style="width: 100%; margin-top: 15px; font-size: 0.9rem;">
+                    <i class="fas fa-chevron-down"></i> Показать еще
+                </button>
+                {% endif %}
+                
+                {% else %}
+                <div style="text-align: center; padding: 30px; color: var(--text-light);">
+                    <i class="fas fa-history" style="font-size: 2.5rem; margin-bottom: 15px;"></i>
+                    <h4>Нет истории операций</h4>
+                    <p>Здесь будут отображаться начисления и списания баллов</p>
+                </div>
+                {% endif %}
+                
+                <div style="margin-top: 25px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                    <a href="{{ url_for('student_profile') }}" class="btn btn-primary" style="width: 100%;">
+                        <i class="fas fa-list-alt"></i> Вся история баллов
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="card fade-in" style="margin-top: 30px;">
+        <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+            <i class="fas fa-gift"></i> Популярные товары
+        </h3>
+        
+        <div class="row">
+            {% set sample_products = [
+                {'name': 'Фирменная футболка', 'price': 200, 'category': 'Одежда'},
+                {'name': 'Кружка с логотипом', 'price': 150, 'category': 'Сувениры'},
+                {'name': 'Блокнот программиста', 'price': 100, 'category': 'Канцелярия'},
+                {'name': 'Набор стикеров', 'price': 50, 'category': 'Сувениры'}
+            ] %}
+            
+            {% for product in sample_products %}
+            <div class="col-3">
+                <div class="mini-product-card">
+                    <div style="background: linear-gradient(135deg, rgba(123, 31, 162, 0.1), rgba(156, 39, 176, 0.1)); 
+                                height: 100px; border-radius: var(--radius); display: flex; align-items: center; 
+                                justify-content: center; margin-bottom: 15px;">
+                        <i class="fas fa-gift" style="color: var(--primary-color); font-size: 2rem;"></i>
+                    </div>
+                    
+                    <h4 style="font-size: 1rem; margin-bottom: 5px; color: var(--text-color);">
+                        {{ product.name }}
+                    </h4>
+                    
+                    <div style="color: var(--text-light); font-size: 0.9rem; margin-bottom: 10px;">
+                        {{ product.category }}
+                    </div>
+                    
+                    <div style="font-weight: bold; color: var(--primary-color); font-size: 1.2rem;">
+                        {{ product.price }} баллов
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        
+        <div style="text-align: center; margin-top: 20px;">
+            <a href="{{ url_for('student_shop') }}" class="btn btn-primary">
+                <i class="fas fa-store"></i> Перейти в магазин
+            </a>
+        </div>
+    </div>
+</div>
+
+<style>
+.welcome-banner {
+    background: linear-gradient(135deg, var(--primary-dark), var(--primary-color));
+    border-radius: var(--radius);
+    padding: 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: white;
+    margin-bottom: 30px;
+    box-shadow: 0 10px 30px rgba(123, 31, 162, 0.3);
+}
+
+.welcome-content h1 {
+    font-size: 2.2rem;
+    margin-bottom: 10px;
+}
+
+.points-circle {
+    width: 150px;
+    height: 150px;
+    border: 8px solid rgba(255, 255, 255, 0.2);
+    border-radius: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+}
+
+.points-number {
+    font-size: 2.5rem;
+    font-weight: bold;
+    line-height: 1;
+}
+
+.points-label {
+    font-size: 1rem;
+    opacity: 0.9;
+    margin-top: 5px;
+}
+
+.quick-action-btn {
+    display: block;
+    padding: 15px;
+    background: var(--card-bg);
+    border-radius: var(--radius);
+    text-decoration: none;
+    color: inherit;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+}
+
+.quick-action-btn:hover {
+    background: white;
+    border-color: var(--primary-color);
+    transform: translateX(5px);
+}
+
+.history-item {
+    padding: 10px 0;
+}
+
+.hidden-item {
+    display: none;
+}
+
+.mini-product-card {
+    background: var(--card-bg);
+    padding: 15px;
+    border-radius: var(--radius);
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+    height: 100%;
+}
+
+.mini-product-card:hover {
+    border-color: var(--primary-color);
+    transform: translateY(-5px);
+}
+
+@media (max-width: 768px) {
+    .welcome-banner {
+        flex-direction: column;
+        text-align: center;
+        gap: 20px;
+    }
+    
+    .welcome-content {
+        order: 2;
+    }
+    
+    .points-display {
+        order: 1;
+    }
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const showMoreBtn = document.getElementById('showMoreHistory');
+    
+    if (showMoreBtn) {
+        showMoreBtn.addEventListener('click', function() {
+            const hiddenItems = document.querySelectorAll('.hidden-item');
+            
+            hiddenItems.forEach(item => {
+                item.style.display = 'block';
+            });
+            
+            this.style.display = 'none';
+        });
+    }
+});
+</script>
+{% endblock %}

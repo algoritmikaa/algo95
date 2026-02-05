@@ -1,0 +1,551 @@
+{% extends "base.html" %}
+
+{% block title %}Мой профиль{% endblock %}
+
+{% block breadcrumbs %}
+    <span>Мой профиль</span>
+{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+        <h1 style="color: var(--primary-color);">
+            <i class="fas fa-user-circle"></i> Мой профиль
+        </h1>
+        
+        <a href="{{ url_for('student_dashboard') }}" class="btn-back">
+            <i class="fas fa-arrow-left"></i> На главную
+        </a>
+    </div>
+    
+    <div class="row">
+        <div class="col-4">
+            <div class="card fade-in">
+                <div style="text-align: center; padding: 30px 20px;">
+                    <div style="width: 120px; height: 120px; background: linear-gradient(135deg, var(--primary-color), var(--primary-light)); 
+                                border-radius: 50%; display: flex; align-items: center; justify-content: center; 
+                                margin: 0 auto 20px; color: white; font-size: 3rem;">
+                        <i class="fas fa-user-graduate"></i>
+                    </div>
+                    
+                    <h2 style="color: var(--primary-color); margin-bottom: 5px;">
+                        {{ current_user.first_name }} {{ current_user.last_name }}
+                    </h2>
+                    
+                    <p style="color: var(--text-light); margin-bottom: 20px;">
+                        {{ current_user.username }}
+                    </p>
+                    
+                    <div style="background: rgba(123, 31, 162, 0.1); padding: 15px; border-radius: var(--radius);">
+                        <div style="font-size: 2.5rem; font-weight: bold; color: var(--primary-color); margin-bottom: 5px;">
+                            {{ current_user.points }}
+                        </div>
+                        <div style="color: var(--text-light);">баллов на счету</div>
+                    </div>
+                </div>
+                
+                <div style="padding: 20px; border-top: 1px solid var(--border-color);">
+                    <h4 style="color: var(--primary-color); margin-bottom: 15px;">
+                        <i class="fas fa-info-circle"></i> Информация
+                    </h4>
+                    
+                    <div style="display: flex; flex-direction: column; gap: 10px;">
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-light);">Группа:</span>
+                            <span style="font-weight: 500;">
+                                {% if current_user.group %}
+                                {{ current_user.group.name }}
+                                {% else %}
+                                <span style="color: var(--text-light); font-style: italic;">Не назначена</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-light);">Рейтинг в группе:</span>
+                            <span style="font-weight: 500;">
+                                {% if rating_position %}
+                                    {{ rating_position }} место
+                                    <a href="{{ url_for('student_group_rating') }}" style="color: var(--primary-color); margin-left: 5px;">
+                                        <i class="fas fa-external-link-alt"></i>
+                                    </a>
+                                {% else %}
+                                    <span style="color: var(--text-light); font-style: italic;">Не определен</span>
+                                {% endif %}
+                            </span>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-light);">Начислено всего:</span>
+                            <span style="font-weight: bold; color: var(--success-color);">
+                                {{ current_user.earned_points }}
+                            </span>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-light);">Дата регистрации:</span>
+                            <span>{{ current_user.created_at.strftime('%d.%m.%Y') }}</span>
+                        </div>
+                        
+                        <div style="display: flex; justify-content: space-between;">
+                            <span style="color: var(--text-light);">Статус:</span>
+                            <span class="user-role" style="background: var(--success-color);">
+                                Ученик
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card fade-in" style="margin-top: 20px;">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-shopping-cart"></i> Мои покупки
+                </h3>
+                
+                {% if current_user.orders %}
+                <div style="max-height: 300px; overflow-y: auto;">
+                    {% for order in current_user.orders|sort(attribute='created_at', reverse=true) %}
+                    <div class="order-item" style="padding: 12px 0; border-bottom: 1px solid var(--border-color);">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 5px;">
+                            <strong>{{ order.product.name }}</strong>
+                            <span style="font-weight: bold; color: var(--primary-color);">
+                                {{ order.product.price * order.quantity }} баллов
+                            </span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; font-size: 0.9rem;">
+                            <span style="color: var(--text-light);">
+                                {{ order.created_at.strftime('%d.%m.%Y') }}
+                            </span>
+                            <span class="order-status status-{{ order.status }}">
+                                {% if order.status == 'pending' %}
+                                <i class="fas fa-clock"></i> Ожидает
+                                {% elif order.status == 'completed' %}
+                                <i class="fas fa-check"></i> Выдан
+                                {% else %}
+                                <i class="fas fa-times"></i> Отменен
+                                {% endif %}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                
+                <div style="text-align: center; margin-top: 15px;">
+                    <a href="{{ url_for('student_shop') }}" class="btn btn-primary btn-sm">
+                        <i class="fas fa-store"></i> Перейти в магазин
+                    </a>
+                </div>
+                
+                {% else %}
+                <div style="text-align: center; padding: 20px; color: var(--text-light);">
+                    <i class="fas fa-shopping-cart" style="font-size: 2rem; margin-bottom: 10px;"></i>
+                    <p>У вас еще нет покупок</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="col-8">
+            <div class="card fade-in">
+                <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                    <i class="fas fa-history"></i> История баллов
+                </h3>
+                
+                {% if history %}
+                <div style="margin-bottom: 20px; display: flex; justify-content: flex-end;">
+                    <select id="history-filter" class="form-control" style="width: 200px;">
+                        <option value="all">Все операции</option>
+                        <option value="positive">Только начисления</option>
+                        <option value="negative">Только списания</option>
+                        <option value="last_month">За последний месяц</option>
+                    </select>
+                </div>
+                
+                <div class="table-responsive">
+                    <table class="table" id="history-table">
+                        <thead>
+                            <tr>
+                                <th>Дата</th>
+                                <th>Операция</th>
+                                <th>Причина</th>
+                                <th>Кто изменил</th>
+                                <th>Баланс после</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% set running_balance = current_user.points %}
+                            {% for record in history %}
+                            {% set running_balance = running_balance - record.points_change %}
+                            <tr class="history-row" 
+                                data-type="{% if record.points_change > 0 %}positive{% else %}negative{% endif %}"
+                                data-date="{{ record.created_at.strftime('%Y-%m-%d') }}">
+                                <td>
+                                    {{ record.created_at.strftime('%d.%m.%Y') }}<br>
+                                    <small style="color: var(--text-light);">
+                                        {{ record.created_at.strftime('%H:%M') }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span style="color: {% if record.points_change > 0 %}var(--success-color){% else %}var(--danger-color){% endif %}; 
+                                              font-weight: bold; font-size: 1.1rem;">
+                                        {% if record.points_change > 0 %}+{% endif %}{{ record.points_change }}
+                                    </span>
+                                </td>
+                                <td>{{ record.reason }}</td>
+                                <td>
+                                    {{ record.changed_by.first_name }} {{ record.changed_by.last_name }}<br>
+                                    <small style="color: var(--text-light);">
+                                        {{ record.changed_by.role|capitalize }}
+                                    </small>
+                                </td>
+                                <td>
+                                    <span style="font-weight: bold; color: var(--primary-color);">
+                                        {{ running_balance }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                    <div>
+                        <span style="color: var(--text-light);">
+                            Всего записей: {{ history|length }}
+                        </span>
+                    </div>
+                    
+                    <div>
+                        <span style="font-weight: bold;">
+                            Общее начислено: 
+                            <span style="color: var(--success-color);">
+                                {% set total_positive = namespace(value=0) %}
+                                {% for record in history %}
+                                    {% if record.points_change > 0 %}
+                                        {% set total_positive.value = total_positive.value + record.points_change %}
+                                    {% endif %}
+                                {% endfor %}
+                                +{{ total_positive.value }}
+                            </span>
+                        </span>
+                        <span style="margin: 0 10px;">|</span>
+                        <span style="font-weight: bold;">
+                            Общее списано: 
+                            <span style="color: var(--danger-color);">
+                                {% set total_negative = namespace(value=0) %}
+                                {% for record in history %}
+                                    {% if record.points_change < 0 %}
+                                        {% set total_negative.value = total_negative.value + record.points_change %}
+                                    {% endif %}
+                                {% endfor %}
+                                {{ total_negative.value }}
+                            </span>
+                        </span>
+                    </div>
+                </div>
+                
+                {% else %}
+                <div style="text-align: center; padding: 40px; color: var(--text-light);">
+                    <i class="fas fa-history" style="font-size: 3rem; margin-bottom: 15px;"></i>
+                    <h4>Нет истории операций</h4>
+                    <p>Здесь будет отображаться история начисления и списания баллов</p>
+                </div>
+                {% endif %}
+            </div>
+            
+            <div class="row" style="margin-top: 20px;">
+                <div class="col-6">
+                    <div class="card fade-in">
+                        <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                            <i class="fas fa-chart-bar"></i> Статистика
+                        </h3>
+                        
+                        <div style="text-align: center;">
+                            <div class="stats-circle">
+                                <div class="circle-progress" data-percent="
+                                    {% if current_user.earned_points > 1000 %}
+                                    100
+                                    {% else %}
+                                    {{ (current_user.earned_points / 1000 * 100)|round|int }}
+                                    {% endif %}
+                                ">
+                                    <span class="circle-value">{{ current_user.earned_points }}</span>
+                                    <span class="circle-label">из 1000</span>
+                                </div>
+                            </div>
+                            <p style="color: var(--text-light); margin-top: 10px;">
+                                Прогресс к цели (начислено)
+                            </p>
+                        </div>
+                        
+                        <div style="margin-top: 20px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>Среднее в день:</span>
+                                <span style="font-weight: bold; color: var(--primary-color);">
+                                    {% if current_user.created_at %}
+                                        {% set days_diff = (datetime.utcnow() - current_user.created_at).days %}
+                                        {% if days_diff > 0 %}
+                                            {{ (current_user.earned_points / days_diff)|round|int }}
+                                        {% else %}
+                                            {{ current_user.earned_points }}
+                                        {% endif %}
+                                    {% else %}
+                                        0
+                                    {% endif %}
+                                </span>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
+                                <span>Потрачено всего:</span>
+                                <span style="font-weight: bold; color: var(--danger-color);">
+                                    {% set spent_total = namespace(value=0) %}
+                                    {% for order in current_user.orders %}
+                                        {% set spent_total.value = spent_total.value + (order.product.price * order.quantity) %}
+                                    {% endfor %}
+                                    {{ spent_total.value }}
+                                </span>
+                            </div>
+                            
+                            <div style="display: flex; justify-content: space-between;">
+                                <span>Активных заказов:</span>
+                                <span style="font-weight: bold;">
+                                    {{ current_user.orders|selectattr('status', 'equalto', 'pending')|list|length }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="col-6">
+                    <div class="card fade-in">
+                        <h3 style="color: var(--primary-color); margin-bottom: 20px;">
+                            <i class="fas fa-lightbulb"></i> Как получить больше баллов?
+                        </h3>
+                        
+                        <div style="display: flex; flex-direction: column; gap: 15px;">
+                            {% for tip in tips %}
+                            <div class="tip-card">
+                                <div class="tip-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div>
+                                    <h4 style="margin-bottom: 5px; font-size: 1rem;">{{ tip.reason }}</h4>
+                                    <p style="color: var(--text-light); margin-bottom: 0; font-size: 0.9rem;">
+                                        +{{ tip.points }} баллов
+                                    </p>
+                                </div>
+                            </div>
+                            {% else %}
+                            <div class="tip-card">
+                                <div class="tip-icon">
+                                    <i class="fas fa-calendar-check"></i>
+                                </div>
+                                <div>
+                                    <h4 style="margin-bottom: 5px; font-size: 1rem;">Регулярное посещение</h4>
+                                    <p style="color: var(--text-light); margin-bottom: 0; font-size: 0.9rem;">
+                                        +10 баллов за каждый урок
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="tip-card">
+                                <div class="tip-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div>
+                                    <h4 style="margin-bottom: 5px; font-size: 1rem;">Пунктуальность</h4>
+                                    <p style="color: var(--text-light); margin-bottom: 0; font-size: 0.9rem;">
+                                        +5 баллов за своевременное прибытие
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="tip-card">
+                                <div class="tip-icon">
+                                    <i class="fas fa-tasks"></i>
+                                </div>
+                                <div>
+                                    <h4 style="margin-bottom: 5px; font-size: 1rem;">Выполнение заданий</h4>
+                                    <p style="color: var(--text-light); margin-bottom: 0; font-size: 0.9rem;">
+                                        +10 баллов за домашнюю работу
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div class="tip-card">
+                                <div class="tip-icon">
+                                    <i class="fas fa-star"></i>
+                                </div>
+                                <div>
+                                    <h4 style="margin-bottom: 5px; font-size: 1rem;">Активность на уроке</h4>
+                                    <p style="color: var(--text-light); margin-bottom: 0; font-size: 0.9rem;">
+                                        +10 баллов за ответы на вопросы
+                                    </p>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        
+                        <div style="margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-color);">
+                            <p style="color: var(--text-light); font-size: 0.9rem; text-align: center;">
+                                <i class="fas fa-info-circle"></i>
+                                За особые достижения преподаватель может начислить дополнительные баллы
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.history-row:hover {
+    background-color: rgba(123, 31, 162, 0.05);
+}
+
+.order-status {
+    display: inline-block;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 500;
+}
+
+.status-pending {
+    background: rgba(255, 152, 0, 0.15);
+    color: var(--warning-color);
+    border: 1px solid rgba(255, 152, 0, 0.3);
+}
+
+.status-completed {
+    background: rgba(76, 175, 80, 0.15);
+    color: var(--success-color);
+    border: 1px solid rgba(76, 175, 80, 0.3);
+}
+
+.status-cancelled {
+    background: rgba(244, 67, 54, 0.15);
+    color: var(--danger-color);
+    border: 1px solid rgba(244, 67, 54, 0.3);
+}
+
+.stats-circle {
+    position: relative;
+    width: 150px;
+    height: 150px;
+    margin: 0 auto;
+}
+
+.circle-progress {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    background: conic-gradient(
+        var(--primary-color) 0% calc(var(--percent) * 1%),
+        var(--border-color) calc(var(--percent) * 1%) 100%
+    );
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.circle-progress::before {
+    content: '';
+    position: absolute;
+    width: 120px;
+    height: 120px;
+    background: var(--card-bg);
+    border-radius: 50%;
+}
+
+.circle-value {
+    font-size: 2rem;
+    font-weight: bold;
+    color: var(--primary-color);
+    position: relative;
+    z-index: 1;
+}
+
+.circle-label {
+    font-size: 0.9rem;
+    color: var(--text-light);
+    position: relative;
+    z-index: 1;
+}
+
+.tip-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    padding: 12px;
+    background: rgba(123, 31, 162, 0.05);
+    border-radius: var(--radius);
+}
+
+.tip-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--primary-color);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+}
+
+.order-item {
+    transition: background-color 0.3s;
+}
+
+.order-item:hover {
+    background-color: rgba(123, 31, 162, 0.05);
+}
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const historyFilter = document.getElementById('history-filter');
+    
+    if (historyFilter) {
+        historyFilter.addEventListener('change', function() {
+            const filterValue = this.value;
+            const rows = document.querySelectorAll('.history-row');
+            const now = new Date();
+            const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+            
+            rows.forEach(row => {
+                const rowType = row.dataset.type;
+                const rowDate = new Date(row.dataset.date);
+                let show = true;
+                
+                switch (filterValue) {
+                    case 'positive':
+                        show = rowType === 'positive';
+                        break;
+                    case 'negative':
+                        show = rowType === 'negative';
+                        break;
+                    case 'last_month':
+                        show = rowDate >= lastMonth;
+                        break;
+                }
+                
+                row.style.display = show ? '' : 'none';
+            });
+        });
+    }
+    
+    // Анимация кругового прогресса
+    const circleProgress = document.querySelector('.circle-progress');
+    if (circleProgress) {
+        const percent = circleProgress.dataset.percent;
+        circleProgress.style.setProperty('--percent', percent);
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,38 @@
+{% extends "base.html" %}
+
+{% block title %}Вход в систему{% endblock %}
+
+{% block content %}
+<div class="container" style="max-width: 400px; margin-top: 50px;">
+    <div class="card fade-in">
+        <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: var(--primary-color);">Вход в систему</h1>
+            <p style="color: var(--text-light);">Введите ваши учетные данные</p>
+        </div>
+        
+        <form method="POST" action="{{ url_for('login') }}">
+            <div class="form-group">
+                <label class="form-label" for="username">Логин</label>
+                <input type="text" id="username" name="username" class="form-control" required placeholder="Введите логин">
+            </div>
+            
+            <div class="form-group">
+                <label class="form-label" for="password">Пароль</label>
+                <input type="password" id="password" name="password" class="form-control" required placeholder="Введите пароль">
+            </div>
+            
+            <div class="form-group" style="margin-top: 30px;">
+                <button type="submit" class="btn btn-primary" style="width: 100%; padding: 12px;">
+                    <i class="fas fa-sign-in-alt"></i> Войти
+                </button>
+            </div>
+        </form>
+        
+        <div style="margin-top: 20px; text-align: center; color: var(--text-light); font-size: 0.9rem;">
+            <p>По умолчанию доступен администратор:</p>
+            <p><strong>Логин:</strong> admin</p>
+            <p><strong>Пароль:</strong> admin123</p>
+        </div>
+    </div>
+</div>
+{% endblock %}
